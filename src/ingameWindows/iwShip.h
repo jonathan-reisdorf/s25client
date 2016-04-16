@@ -21,19 +21,17 @@
 
 #include "IngameWindow.h"
 
-class dskGameInterface;
 class noShip;
-class GameWorldViewer;
+class GameWorldView;
 
 class iwShip : public IngameWindow
 {
-        GameWorldViewer* const gwv;
+        GameWorldView& gwv;
         unsigned ship_id; /// ID des Schiffes, welches gerade angezeigt wird
         unsigned char player; /// Besitzer des Schiffes, den wir für die Umwandlung ID->richtiges Schiff brauchen
 
     public:
-        /// Konstruktor von @p iwBuilding.
-        iwShip(GameWorldViewer* const gwv, dskGameInterface* const gi, noShip* const ship);
+        iwShip(GameWorldView& gwv, noShip* const ship);
 
     private:
 

@@ -20,7 +20,7 @@
 #pragma once
 
 #include "Addons.h"
-#include "../mygettext/src/mygettext.h"
+#include "mygettext/src/mygettext.h"
 
 ///////////////////////////////////////////////////////////////////////////////
 /**
@@ -31,13 +31,12 @@
 class AddonManualRoadEnlargement : public AddonBool
 {
     public:
-        AddonManualRoadEnlargement() : AddonBool(ADDON_MANUAL_ROAD_ENLARGEMENT,
+        AddonManualRoadEnlargement() : AddonBool(AddonId::MANUAL_ROAD_ENLARGEMENT,
                     ADDONGROUP_ECONOMY,
-                    gettext_noop("Manual road enlargement"),
-                    gettext_noop("Allows you to manually upgrade your roads\n"
-                                 "and build donkey roads directly."),
+                    _("Manual road enlargement"),
+                    _("Manually upgrade your roads and directly build donkey roads."),
                     0
-                                                    )
+                    )
         {
         }
 };

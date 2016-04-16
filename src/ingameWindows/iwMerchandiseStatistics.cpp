@@ -27,7 +27,6 @@
 #include "controls/ctrlText.h"
 #include "ogl/glArchivItem_Font.h"
 #include "gameData/const_gui_ids.h"
-#include "libutil/src/colors.h"
 
 // Include last!
 #include "DebugNew.h" // IWYU pragma: keep
@@ -51,12 +50,6 @@ const unsigned int iwMerchandiseStatistics::BarColors[14] =
     0xFF202420  // schwarz
 };
 
-///////////////////////////////////////////////////////////////////////////////
-/**
- *  Konstruktor von @p iwMerchandiseStatistics.
- *
- *  @author jh
- */
 iwMerchandiseStatistics::iwMerchandiseStatistics()
     : IngameWindow(CGI_MERCHANDISE_STATISTICS, 0xFFFE, 0xFFFE, 252, 310, _("Merchandise"), LOADER.GetImageN("resource", 41)), currentTime(STAT_1H)
 {
@@ -136,7 +129,7 @@ void iwMerchandiseStatistics::Msg_ButtonClick(const unsigned int ctrl_id)
     }
 }
 
-void iwMerchandiseStatistics::Msg_OptionGroupChange(const unsigned int ctrl_id, const unsigned short selection)
+void iwMerchandiseStatistics::Msg_OptionGroupChange(const unsigned int ctrl_id, const int selection)
 {
     switch(ctrl_id)
     {

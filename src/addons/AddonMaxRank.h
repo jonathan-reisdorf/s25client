@@ -20,7 +20,7 @@
 #pragma once
 
 #include "Addons.h"
-#include "../mygettext/src/mygettext.h"
+#include "mygettext/src/mygettext.h"
 
 ///////////////////////////////////////////////////////////////////////////////
 /**
@@ -41,18 +41,18 @@
 class AddonMaxRank : public AddonList
 {
     public:
-        AddonMaxRank() : AddonList(ADDON_MAX_RANK,
+        AddonMaxRank() : AddonList(AddonId::MAX_RANK,
                                        ADDONGROUP_MILITARY,
-                                       gettext_noop("Set max rank"),
-                                       gettext_noop("Allows you to select the highest rank for soldiers\n\n"),
+                                       _("Set max rank"),
+                                       _("Limit the rank for soldiers"),
                                        0
                                       )
         {
-            addOption(gettext_noop("General (4)"));
-            addOption(gettext_noop("Officer (3)"));
-            addOption(gettext_noop("Sergeant (2)"));
-            addOption(gettext_noop("Privatefc (1)"));
-            addOption(gettext_noop("Private (0)"));
+            addOption(_("General (4)"));
+            addOption(_("Officer (3)"));
+            addOption(_("Sergeant (2)"));
+            addOption(_("Privatefc (1)"));
+            addOption(_("Private (0)"));
         }
 };
 

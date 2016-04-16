@@ -20,7 +20,10 @@
 #pragma once
 
 #include "Addons.h"
-#include "../mygettext/src/mygettext.h"
+#include "mygettext/src/mygettext.h"
+#include <boost/array.hpp>
+
+const boost::array<unsigned, 6> SUPPRESS_UNUSED waterwayLengths = {{ 3, 5, 9, 13, 21, 0 }};
 
 ///////////////////////////////////////////////////////////////////////////////
 /**
@@ -31,10 +34,10 @@
 class AddonMaxWaterwayLength : public AddonList
 {
     public:
-        AddonMaxWaterwayLength() : AddonList(ADDON_MAX_WATERWAY_LENGTH,
+        AddonMaxWaterwayLength() : AddonList(AddonId::MAX_WATERWAY_LENGTH,
                                                  ADDONGROUP_GAMEPLAY,
-                                                 gettext_noop("Set maximum waterway length"),
-                                                 gettext_noop("Limits the distance settlers may travel per boat.\n\n"
+                                                 _("Set maximum waterway length"),
+                                                 _("Limits the distance settlers may travel per boat.\n\n"
                                                          "Possible values are:\n"
                                                          "Short: 3 tiles\n"
                                                          "Default: 5 tiles\n"
@@ -45,12 +48,12 @@ class AddonMaxWaterwayLength : public AddonList
                                                  1
                                                 )
         {
-            addOption(gettext_noop("Short"));
-            addOption(gettext_noop("Default"));
-            addOption(gettext_noop("Long"));
-            addOption(gettext_noop("Longer"));
-            addOption(gettext_noop("Very long"));
-            addOption(gettext_noop("Unlimited"));
+            addOption(_("Short"));
+            addOption(_("Default"));
+            addOption(_("Long"));
+            addOption(_("Longer"));
+            addOption(_("Very long"));
+            addOption(_("Unlimited"));
         }
 };
 

@@ -31,12 +31,6 @@
 // Include last!
 #include "DebugNew.h" // IWYU pragma: keep
 
-///////////////////////////////////////////////////////////////////////////////
-/**
- *
- *
- *  @author FloSoft
- */
 void Addon::hideGui(Window* window, unsigned int id) const
 {
     ctrlText* text = window->GetCtrl<ctrlText>(id);
@@ -48,35 +42,23 @@ void Addon::hideGui(Window* window, unsigned int id) const
         button->SetVisible(false);
 }
 
-///////////////////////////////////////////////////////////////////////////////
-/**
- *
- *
- *  @author FloSoft
- */
 void Addon::createGui(Window* window, unsigned int id, unsigned short& y, bool  /*readonly*/, unsigned int  /*status*/) const //-V669
 {
     ctrlText* text = window->GetCtrl<ctrlText>(id);
     if(!text)
-        text = window->AddText(id, 52, y + 4, _(name_), COLOR_YELLOW, 0, NormalFont);
+        text = window->AddText(id, 52, y + 4, name_, COLOR_YELLOW, 0, NormalFont);
 
     text->SetVisible(true);
     text->Move(52, y + 4);
 
     ctrlImageButton* button = window->GetCtrl<ctrlImageButton>(id + 1);
     if(!button)
-        button = window->AddImageButton(id + 1, 20, y, 22, 22, TC_GREY, LOADER.GetImageN("io", 21), _(description_));
+        button = window->AddImageButton(id + 1, 20, y, 22, 22, TC_GREY, LOADER.GetImageN("io", 21), description_);
 
     button->SetVisible(true);
     button->Move(20, y);
 }
 
-///////////////////////////////////////////////////////////////////////////////
-/**
- *
- *
- *  @author FloSoft
- */
 void AddonList::hideGui(Window* window, unsigned int id) const
 {
     Addon::hideGui(window, id);
@@ -86,12 +68,6 @@ void AddonList::hideGui(Window* window, unsigned int id) const
         combo->SetVisible(false);
 }
 
-///////////////////////////////////////////////////////////////////////////////
-/**
- *
- *
- *  @author FloSoft
- */
 void AddonList::createGui(Window* window, unsigned int id, unsigned short& y, bool readonly, unsigned int status) const
 {
     Addon::createGui(window, id, y, readonly, status);
@@ -101,7 +77,7 @@ void AddonList::createGui(Window* window, unsigned int id, unsigned short& y, bo
     {
         combo = window->AddComboBox(id + 2, 450, y, 220, 20,  TC_GREY, NormalFont, 100, readonly );
         for(std::vector<std::string>::const_iterator it = options.begin(); it != options.end(); ++it)
-            combo->AddString(_(*it));
+            combo->AddString(*it);
 
         setGuiStatus(window, id, status);
     }
@@ -112,12 +88,6 @@ void AddonList::createGui(Window* window, unsigned int id, unsigned short& y, bo
     y += 30;
 }
 
-///////////////////////////////////////////////////////////////////////////////
-/**
- *
- *
- *  @author FloSoft
- */
 void AddonList::setGuiStatus(Window* window, unsigned int id, unsigned int status) const
 {
     ctrlComboBox* combo = window->GetCtrl<ctrlComboBox>(id + 2);
@@ -126,12 +96,6 @@ void AddonList::setGuiStatus(Window* window, unsigned int id, unsigned int statu
         combo->SetSelection(status);
 }
 
-///////////////////////////////////////////////////////////////////////////////
-/**
- *
- *
- *  @author FloSoft
- */
 unsigned int AddonList::getGuiStatus(Window* window, unsigned int id, bool& failed) const
 {
     ctrlComboBox* combo = window->GetCtrl<ctrlComboBox>(id + 2);
@@ -145,12 +109,6 @@ unsigned int AddonList::getGuiStatus(Window* window, unsigned int id, bool& fail
     return combo->GetSelection();
 }
 
-///////////////////////////////////////////////////////////////////////////////
-/**
- *
- *
- *  @author FloSoft
- */
 void AddonBool::hideGui(Window* window, unsigned int id) const
 {
     Addon::hideGui(window, id);
@@ -159,12 +117,6 @@ void AddonBool::hideGui(Window* window, unsigned int id) const
         check->SetVisible(false);
 }
 
-///////////////////////////////////////////////////////////////////////////////
-/**
- *
- *
- *  @author FloSoft
- */
 void AddonBool::createGui(Window* window, unsigned int id, unsigned short& y, bool readonly, unsigned int status) const
 {
     Addon::createGui(window, id, y, readonly, status);
@@ -182,12 +134,6 @@ void AddonBool::createGui(Window* window, unsigned int id, unsigned short& y, bo
     y += 30;
 }
 
-///////////////////////////////////////////////////////////////////////////////
-/**
- *
- *
- *  @author FloSoft
- */
 void AddonBool::setGuiStatus(Window* window, unsigned int id, unsigned int status) const
 {
     ctrlCheck* check = window->GetCtrl<ctrlCheck>(id + 2);
@@ -196,12 +142,6 @@ void AddonBool::setGuiStatus(Window* window, unsigned int id, unsigned int statu
         check->SetCheck( (status != 0) );
 }
 
-///////////////////////////////////////////////////////////////////////////////
-/**
- *
- *
- *  @author FloSoft
- */
 unsigned int AddonBool::getGuiStatus(Window* window, unsigned int id, bool& failed) const
 {
     ctrlCheck* check = window->GetCtrl<ctrlCheck>(id + 2);

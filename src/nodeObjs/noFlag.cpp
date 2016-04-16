@@ -36,12 +36,6 @@
 #include "DebugNew.h" // IWYU pragma: keep
 class noFigure;
 
-///////////////////////////////////////////////////////////////////////////////
-/**
- *
- *
- *  @author OLiver
- */
 noFlag::noFlag(const MapPoint pos,
                const unsigned char player, const unsigned char dis_dir)
     : noRoadNode(NOP_FLAG, pos, player),
@@ -77,12 +71,6 @@ noFlag::noFlag(const MapPoint pos,
     }
 }
 
-///////////////////////////////////////////////////////////////////////////////
-/**
- *
- *
- *  @author OLiver
- */
 noFlag::noFlag(SerializedGameData& sgd, const unsigned int obj_id)
     : noRoadNode(sgd, obj_id),
       ani_offset(rand() % 20000), flagtype(FlagType(sgd.PopUnsignedChar()))
@@ -98,12 +86,6 @@ noFlag::noFlag(SerializedGameData& sgd, const unsigned int obj_id)
     }
 }
 
-///////////////////////////////////////////////////////////////////////////////
-/**
- *
- *
- *  @author OLiver
- */
 noFlag::~noFlag()
 {
     // Waren vernichten
@@ -111,12 +93,6 @@ noFlag::~noFlag()
         delete wares[i];
 }
 
-///////////////////////////////////////////////////////////////////////////////
-/**
- *
- *
- *  @author OLiver
- */
 void noFlag::Destroy_noFlag()
 {
     /// Da ist dann nichts
@@ -140,12 +116,6 @@ void noFlag::Destroy_noFlag()
     Destroy_noRoadNode();
 }
 
-///////////////////////////////////////////////////////////////////////////////
-/**
- *
- *
- *  @author OLiver
- */
 void noFlag::Serialize_noFlag(SerializedGameData& sgd) const
 {
     Serialize_noRoadNode(sgd);
@@ -162,12 +132,6 @@ void noFlag::Serialize_noFlag(SerializedGameData& sgd) const
     }
 }
 
-///////////////////////////////////////////////////////////////////////////////
-/**
- *
- *
- *  @author OLiver
- */
 void noFlag::Draw(int x, int y)
 {
     // Positionen der Waren an der Flagge relativ zur Flagge
@@ -185,7 +149,7 @@ void noFlag::Draw(int x, int y)
 
     unsigned ani_step = GAMECLIENT.GetGlobalAnimation(8, 2, 1, ani_offset);
 
-    LOADER.flag_cache[gwg->GetPlayer(player).nation][flagtype][ani_step].draw(x, y, 0xFFFFFFFF, COLORS[gwg->GetPlayer(player).color]);
+    LOADER.flag_cache[gwg->GetPlayer(player).nation][flagtype][ani_step].draw(x, y, 0xFFFFFFFF, gwg->GetPlayer(player).color);
 
     // Waren (von hinten anfangen zu zeichnen)
     for(unsigned i = 8; i; --i)

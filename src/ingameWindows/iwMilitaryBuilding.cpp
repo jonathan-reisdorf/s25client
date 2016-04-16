@@ -29,6 +29,7 @@
 #include "iwMsgbox.h"
 #include "iwHelp.h"
 #include "buildings/nobMilitary.h"
+#include "world/GameWorldView.h"
 #include "figures/nofPassiveSoldier.h"
 #include "ogl/glArchivItem_Bitmap.h"
 #include "ogl/glArchivItem_Font.h"
@@ -38,15 +39,9 @@
 // Include last!
 #include "DebugNew.h" // IWYU pragma: keep
 
-///////////////////////////////////////////////////////////////////////////////
-/**
- *  Konstruktor von @p iwMilitaryBuilding.
- *
- *  @author OLiver
- */
-iwMilitaryBuilding::iwMilitaryBuilding(GameWorldViewer* const gwv, dskGameInterface* const gi, nobMilitary* const building)
+iwMilitaryBuilding::iwMilitaryBuilding(GameWorldView& gwv, nobMilitary* const building)
     : IngameWindow(building->CreateGUIID(), (unsigned short) - 2, (unsigned short) - 2, 226, 194, _(BUILDING_NAMES[building->GetBuildingType()]), LOADER.GetImageN("resource", 41)),
-      building(building),gi(gi), gwv(gwv)
+    gwv(gwv), building(building)
 {
     // Schwert
     AddImage(0, 28, 39, LOADER.GetMapImageN(2298));
@@ -70,7 +65,7 @@ iwMilitaryBuilding::iwMilitaryBuilding(GameWorldViewer* const gwv, dskGameInterf
 	// "Go to next" (building of same type)
     AddImageButton( 9, 179, 115, 30, 32, TC_GREY, LOADER.GetImageN("io_new", 11), _("Go to next military building"));
 	//addon military control active? -> show button
-	if(GAMECLIENT.GetGGS().isEnabled(ADDON_MILITARY_CONTROL))
+	if(GAMECLIENT.GetGGS().isEnabled(AddonId::MILITARY_CONTROL))
 		AddImageButton( 10, 124, 147, 30, 32, TC_GREY, LOADER.GetImageN("io_new", 12), _("Send max rank soldiers to a warehouse"));
 }
 
@@ -110,7 +105,7 @@ void iwMilitaryBuilding::Msg_PaintAfter()
         LOADER.GetMapImageN(2321 + (*it)->GetRank())->Draw(GetX() + width_ / 2 - 22 * TROOPS_COUNT[building->nation][building->size] / 2 + 12 + i * 22, GetY() + 110, 0, 0, 0, 0, 0, 0);
 
     // Draw health above soldiers
-    if (GAMECLIENT.GetGGS().isEnabled(ADDON_MILITARY_HITPOINTS)) { 
+    if (GAMECLIENT.GetGGS().isEnabled(AddonId::MILITARY_HITPOINTS)) { 
         unsigned short leftXCoordinate = GetX() + width_ / 2 - 22 * TROOPS_COUNT[building->nation][building->size] / 2;
 
         // black background for hitpoints
@@ -182,7 +177,7 @@ void iwMilitaryBuilding::Msg_ButtonClick(const unsigned int ctrl_id)
         } break;
         case 7: // "Gehe Zu Ort"
         {
-            gwv->MoveToMapObject(building->GetPos());
+            gwv.MoveToMapPt(building->GetPos());
         } break;
 		case 9: //go to next of same type
 		{
@@ -197,8 +192,8 @@ void iwMilitaryBuilding::Msg_ButtonClick(const unsigned int ctrl_id)
 					++it;
 					if(it == militaryBuildings.end()) //was last entry in list -> goto first												{
 						it=militaryBuildings.begin();
-					gwv->MoveToMapObject((*it)->GetPos());
-					iwMilitaryBuilding* nextscrn=new iwMilitaryBuilding(gwv, gi, (*it));
+					gwv.MoveToMapPt((*it)->GetPos());
+					iwMilitaryBuilding* nextscrn=new iwMilitaryBuilding(gwv, *it);
 					nextscrn->Move(x_,y_);
 					WINDOWMANAGER.Show(nextscrn);
 					break;
@@ -213,17 +208,11 @@ void iwMilitaryBuilding::Msg_ButtonClick(const unsigned int ctrl_id)
     }
 }
 
-///////////////////////////////////////////////////////////////////////////////
-/**
- *
- *
- *  @author OLiver
- */
 void iwMilitaryBuilding::DemolitionNotAllowed()
 {
     // Meldung auswählen, je nach Einstellung
     std::string msg;
-    switch(GAMECLIENT.GetGGS().getSelection(ADDON_DEMOLITION_PROHIBITION))
+    switch(GAMECLIENT.GetGGS().getSelection(AddonId::DEMOLITION_PROHIBITION))
     {
         default: RTTR_Assert(false); break;
         case 1: msg = _("Demolition ist not allowed because the building is under attack!"); break;

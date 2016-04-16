@@ -30,16 +30,9 @@
 // Include last!
 #include "DebugNew.h" // IWYU pragma: keep
 class GameWorldViewer;
-class dskGameInterface;
 
-///////////////////////////////////////////////////////////////////////////////
-/**
- *  Konstruktor von @p iwHarborBuilding.
- *
- *  @author OLiver
- */
-iwHarborBuilding::iwHarborBuilding(GameWorldViewer* const gwv, dskGameInterface* const gi, nobHarborBuilding* hb)
-    : iwHQ(gwv, gi, hb, _("Harbor building"), 4)
+iwHarborBuilding::iwHarborBuilding(GameWorldView& gwv, nobHarborBuilding* hb)
+    : iwHQ(gwv, hb, _("Harbor building"), 4)
 {
     // Zusätzliche Hafenseite
     ctrlGroup* harbor_page = AddGroup(103);
@@ -123,12 +116,6 @@ void iwHarborBuilding::AdjustExplorationExpeditionButton(bool flip)
     }
 }
 
-///////////////////////////////////////////////////////////////////////////////
-/**
- *
- *
- *  @author OLiver
- */
 void iwHarborBuilding::Msg_Group_ButtonClick(const unsigned int group_id, const unsigned int ctrl_id)
 {
     switch(group_id)

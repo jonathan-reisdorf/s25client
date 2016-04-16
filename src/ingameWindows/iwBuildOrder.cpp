@@ -29,12 +29,6 @@
 // Include last!
 #include "DebugNew.h" // IWYU pragma: keep
 
-///////////////////////////////////////////////////////////////////////////////
-/**
- *  Konstruktor von @p iwBuildOrder.
- *
- *  @author OLiver
- */
 iwBuildOrder::iwBuildOrder()
     : IngameWindow(CGI_BUILDORDER, (unsigned short) - 1, (unsigned short) - 1, 320, 300, _("Building sequence"), LOADER.GetImageN("io", 5)),
       settings_changed(false)
@@ -42,8 +36,9 @@ iwBuildOrder::iwBuildOrder()
     ctrlList* list = AddList(0, 15, 60, 150, 220, TC_GREY, NormalFont);
 
     // Liste füllen
-    for(unsigned char i = 0; i < GAMECLIENT.visual_settings.build_order.size(); ++i)
-        list->AddString(_(BUILDING_NAMES[GAMECLIENT.visual_settings.build_order[i]])); //-V807
+    BuildOrders buildOrders = GAMECLIENT.visual_settings.build_order;
+    for(unsigned char i = 0; i < buildOrders.size(); ++i)
+        list->AddString(_(BUILDING_NAMES[buildOrders[i]])); //-V807
 
     // Nach ganz oben
     AddImageButton(1, 250, 194, 48, 20, TC_GREY, LOADER.GetImageN("io", 215), _("Top"));
@@ -55,7 +50,7 @@ iwBuildOrder::iwBuildOrder()
     AddImageButton(4, 250, 260, 48, 20, TC_GREY, LOADER.GetImageN("io", 216), _("Bottom"));
 
     // Bild der Auswahl
-    AddImage(5, 240, 150, LOADER.GetNationImage(GAMECLIENT.GetLocalPlayer().nation, 250 + GAMECLIENT.visual_settings.build_order[0] * 5));
+    AddImage(5, 240, 150, LOADER.GetNationImage(GAMECLIENT.GetLocalPlayer().nation, 250 + buildOrders[0] * 5));
 
     ctrlComboBox* combo = AddComboBox(6, 15, 30, 290, 20, TC_GREY, NormalFont, 100);
     combo->AddString(_("Sequence of given order")); // "Reihenfolge der Auftraggebung"
@@ -103,7 +98,7 @@ void iwBuildOrder::Msg_Timer(const unsigned int  /*ctrl_id*/)
 }
 
 
-void iwBuildOrder::Msg_ListSelectItem(const unsigned int ctrl_id, const unsigned short selection)
+void iwBuildOrder::Msg_ListSelectItem(const unsigned int ctrl_id, const int selection)
 {
     switch(ctrl_id)
     {

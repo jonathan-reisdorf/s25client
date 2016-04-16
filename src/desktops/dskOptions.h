@@ -31,18 +31,18 @@ class dskOptions: public Desktop
         ~dskOptions() override;
 
     private:
-        void Msg_OptionGroupChange(const unsigned int ctrl_id, const unsigned short selection) override;
+        void Msg_OptionGroupChange(const unsigned int ctrl_id, const int selection) override;
         void Msg_ButtonClick(const unsigned int ctrl_id) override;
         void Msg_MsgBoxResult(const unsigned int msgbox_id, const MsgboxResult mbr) override;
 
         void Msg_Group_ButtonClick(const unsigned int group_id, const unsigned int ctrl_id) override;
         void Msg_Group_ProgressChange(const unsigned int group_id, const unsigned int ctrl_id, const unsigned short position) override;
-        void Msg_Group_ComboSelectItem(const unsigned int group_id, const unsigned int ctrl_id, const unsigned short selection) override;
-        void Msg_Group_OptionGroupChange(const unsigned int group_id, const unsigned int ctrl_id, const unsigned short selection) override;
+        void Msg_Group_ComboSelectItem(const unsigned int group_id, const unsigned int ctrl_id, const int selection) override;
+        void Msg_Group_OptionGroupChange(const unsigned int group_id, const unsigned int ctrl_id, const int selection) override;
 
     private:
         GlobalGameSettings ggs;
-        std::vector<VideoMode> video_modes; ///< Vector für die Auflösungen
+        std::vector<VideoMode> video_modes; /// Vector für die Auflösungen
 
         void loadVideoModes();
         static bool cmpVideoModes(const VideoMode& left, const VideoMode& right);

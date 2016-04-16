@@ -22,19 +22,15 @@
 #include "IngameWindow.h"
 #include "driver/src/VideoInterface.h"
 
-class dskGameInterface;
-
-/// Fenster mit den Statistiken.
 class iwSettings : public IngameWindow
 {
     public:
-        /// Konstruktor von @p iwStatistics.
-        iwSettings(dskGameInterface* gameDesktop);
+        iwSettings();
         ~iwSettings() override;
 
     private:
-        std::vector<VideoMode> video_modes; ///< Vector für die Auflösungen
-        void Msg_OptionGroupChange(const unsigned int ctrl_id, const unsigned short selection) override;
+        std::vector<VideoMode> video_modes; /// Vector für die Auflösungen
+        void Msg_OptionGroupChange(const unsigned int ctrl_id, const int selection) override;
         void Msg_CheckboxChange(const unsigned int ctrl_id, const bool checked) override;
 };
 

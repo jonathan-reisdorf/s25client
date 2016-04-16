@@ -25,6 +25,7 @@
 #include "GameCommand.h"
 #include "GameObject.h"
 #include "libutil/src/Serializer.h"
+#include <vector>
 
 /*
  * das Klassenkommentar ist alles Client-Sicht, für Server-Sicht ist alles andersrum
@@ -36,28 +37,38 @@
  * ist zum Verschicken der Nachrichten gedacht!
  */
 
+struct AsyncChecksum{
+    unsigned randState;
+    unsigned objCt;
+    unsigned objIdCt;
+    AsyncChecksum(): randState(0), objCt(0), objIdCt(0){}
+    explicit AsyncChecksum(unsigned randState): randState(randState), objCt(GameObject::GetObjCount()), objIdCt(GameObject::GetObjIDCounter()){}
+    AsyncChecksum(unsigned randState, unsigned objCt, unsigned objIdCt): randState(randState), objCt(objCt), objIdCt(objIdCt){}
+
+    inline bool operator==(const AsyncChecksum& rhs) const;
+    inline bool operator!=(const AsyncChecksum& rhs) const;
+};
+
 class GameMessage_GameCommand : public GameMessage
 {
     public:
         /// Checksumme, die der Spieler übermittelt
-        unsigned checksum;
-        unsigned obj_cnt;
-        unsigned obj_id_cnt;
+        AsyncChecksum checksum;
         /// Die einzelnen GameCommands
         std::vector<gc::GameCommandPtr> gcs;
 
     public:
 
         GameMessage_GameCommand() : GameMessage(NMS_GAMECOMMANDS) { } //-V730
-        GameMessage_GameCommand(const unsigned char player, const unsigned checksum, const std::vector<gc::GameCommandPtr>& gcs)
-            : GameMessage(NMS_GAMECOMMANDS, player), checksum(checksum), obj_cnt(GameObject::GetObjCount()), obj_id_cnt(GameObject::GetObjIDCounter()), gcs(gcs){}
+        GameMessage_GameCommand(const unsigned char player, const AsyncChecksum& checksum, const std::vector<gc::GameCommandPtr>& gcs)
+            : GameMessage(NMS_GAMECOMMANDS, player), checksum(checksum), gcs(gcs){}
 
         void Serialize(Serializer& ser) const override
         {
             GameMessage::Serialize(ser);
-            ser.PushUnsignedInt(checksum);
-            ser.PushUnsignedInt(GameObject::GetObjCount());
-            ser.PushUnsignedInt(GameObject::GetObjIDCounter());
+            ser.PushUnsignedInt(checksum.randState);
+            ser.PushUnsignedInt(checksum.objCt);
+            ser.PushUnsignedInt(checksum.objIdCt);
             ser.PushUnsignedInt(gcs.size());
 
             for(unsigned i = 0; i < gcs.size(); ++i)
@@ -71,9 +82,9 @@ class GameMessage_GameCommand : public GameMessage
         void Deserialize(Serializer& ser) override
         {
             GameMessage::Deserialize(ser);
-            checksum = ser.PopUnsignedInt();
-            obj_cnt = ser.PopUnsignedInt();
-            obj_id_cnt = ser.PopUnsignedInt();
+            checksum.randState = ser.PopUnsignedInt();
+            checksum.objCt = ser.PopUnsignedInt();
+            checksum.objIdCt = ser.PopUnsignedInt();
             gcs.resize(ser.PopUnsignedInt());
             for(unsigned i = 0; i < gcs.size(); ++i)
             {
@@ -84,9 +95,21 @@ class GameMessage_GameCommand : public GameMessage
 
         void Run(MessageInterface* callback) override
         {
-            GetInterface(callback)->OnNMSGameCommand(*this);
+            GetInterface(callback)->OnGameMessage(*this);
         }
 };
+
+bool AsyncChecksum::operator==(const AsyncChecksum& rhs) const
+{
+    return randState == rhs.randState &&
+               objCt == rhs.objCt &&
+             objIdCt == rhs.objIdCt;
+}
+
+bool AsyncChecksum::operator!=(const AsyncChecksum& rhs) const
+{
+    return !(*this == rhs);
+}
 
 #endif // GameMessage_GameCommand_h__
 

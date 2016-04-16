@@ -67,12 +67,6 @@ dskGameLoader::~dskGameLoader()
     GAMEMANAGER.SetCursor();
 }
 
-///////////////////////////////////////////////////////////////////////////////
-/**
- *
- *
- *  @author OLiver
- */
 void dskGameLoader::Msg_MsgBoxResult(const unsigned int msgbox_id, const MsgboxResult  /*mbr*/)
 {
     if(msgbox_id == 0) // Verbindung zu Server verloren?
@@ -86,12 +80,6 @@ void dskGameLoader::Msg_MsgBoxResult(const unsigned int msgbox_id, const MsgboxR
     }
 }
 
-///////////////////////////////////////////////////////////////////////////////
-/**
- *
- *
- *  @author FloSoft
- */
 void dskGameLoader::Msg_Timer(const unsigned int  /*ctrl_id*/)
 {
     static bool load_nations[NAT_COUNT];
@@ -134,9 +122,9 @@ void dskGameLoader::Msg_Timer(const unsigned int  /*ctrl_id*/)
                 return;
             }
 
-            if(GAMECLIENT.GetGGS().isEnabled(ADDON_CATAPULT_GRAPHICS))
+            if(GAMECLIENT.GetGGS().isEnabled(AddonId::CATAPULT_GRAPHICS))
             {
-                if(!LOADER.LoadFilesFromAddon(ADDON_CATAPULT_GRAPHICS))
+                if(!LOADER.LoadFilesFromAddon(AddonId::CATAPULT_GRAPHICS))
                 {
                     LC_Status_Error(_("Failed to load addon objects."));
                     return;

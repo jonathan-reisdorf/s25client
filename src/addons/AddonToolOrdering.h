@@ -6,10 +6,10 @@
 class AddonToolOrdering : public AddonBool
 {
     public:
-        AddonToolOrdering() : AddonBool(ADDON_TOOL_ORDERING,
+        AddonToolOrdering() : AddonBool(AddonId::TOOL_ORDERING,
                                             ADDONGROUP_GAMEPLAY,
-                                            gettext_noop("Tool ordering"),
-                                            gettext_noop("Allows to order a specific amount of tools for priority production."),
+                                            _("Tool ordering"),
+                                            _("Allows to order a specific amount of tools for priority production."),
                                             0
                                            )
         {

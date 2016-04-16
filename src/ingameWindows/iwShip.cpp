@@ -27,21 +27,14 @@
 #include "controls/ctrlButton.h"
 #include "ogl/glArchivItem_Bob.h"
 #include "ogl/glArchivItem_Font.h"
+#include "world/GameWorldView.h"
 #include "gameData/JobConsts.h"
 #include "gameData/const_gui_ids.h"
 
 // Include last!
 #include "DebugNew.h" // IWYU pragma: keep
 
-///////////////////////////////////////////////////////////////////////////////
-/**
- *  Konstruktor von @p iwShip.
- *
- *  @todo überprüfen und die restlichen Steuerelemente zur Funktion bringen
- *
- *  @author OLiver
- */
-iwShip::iwShip(GameWorldViewer* const gwv, dskGameInterface* const  /*gi*/, noShip* const ship)
+iwShip::iwShip(GameWorldView& gwv, noShip* const ship)
     : IngameWindow(CGI_SHIP, (unsigned short) - 2, (unsigned short) - 2, 252, 238, _("Ship register"), LOADER.GetImageN("resource", 41)),
       gwv(gwv), ship_id(ship ? GAMECLIENT.GetPlayer(ship->GetPlayer()).GetShipID(ship) : 0), player(ship ? ship->GetPlayer() : GAMECLIENT.GetPlayerID())
 {
@@ -113,7 +106,7 @@ void iwShip::Msg_PaintAfter()
         GetCtrl<Window>(11)->SetVisible(true);
 
         for(unsigned char i = 0; i < 6; ++i)
-            GetCtrl<Window>(12 + i)->SetVisible(gwv->GetNextFreeHarborPoint(ship->GetPos(),
+            GetCtrl<Window>(12 + i)->SetVisible(gwv.GetViewer().GetNextFreeHarborPoint(ship->GetPos(),
                                                 ship->GetCurrentHarbor(), i, ship->GetPlayer()) > 0);
 
     }
@@ -178,7 +171,7 @@ void iwShip::Msg_ButtonClick(const unsigned int ctrl_id)
         } break;
         case 7: // "Gehe Zu Ort"
         {
-            gwv->MoveToMapObject(ship->GetPos());
+            gwv.MoveToMapPt(ship->GetPos());
         } break;
         /*  case 2: // Hilfe
                 {
@@ -259,9 +252,9 @@ void iwShip::DrawCargo()
             if (i == JOB_PACKDONKEY)
                 LOADER.GetMapImageN(2016)->Draw(x, y);
             else if(i == JOB_BOATCARRIER)
-                LOADER.GetBobN("carrier")->Draw(GD_BOAT, 5, false, 0, x, y, COLORS[gwv->GetPlayer(ship->GetPlayer()).color]);
+                LOADER.GetBobN("carrier")->Draw(GD_BOAT, 5, false, 0, x, y, gwv.GetViewer().GetPlayer(ship->GetPlayer()).color);
             else
-                LOADER.GetBobN("jobs")->Draw(job_bobs_id, 5, JOB_CONSTS[i].fat, 0, x, y, COLORS[gwv->GetPlayer(ship->GetPlayer()).color]);
+                LOADER.GetBobN("jobs")->Draw(job_bobs_id, 5, JOB_CONSTS[i].fat, 0, x, y, gwv.GetViewer().GetPlayer(ship->GetPlayer()).color);
 
             x += xStep;
             lineCounter++;

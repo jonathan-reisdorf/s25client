@@ -1,7 +1,7 @@
 FIND_PACKAGE(BZip2 REQUIRED)
 FIND_PACKAGE(OpenGL REQUIRED)
 FIND_PACKAGE(Gettext REQUIRED)
-FIND_PACKAGE(Boost 1.55.0 COMPONENTS filesystem iostreams system REQUIRED)
+FIND_PACKAGE(Boost 1.55.0 COMPONENTS filesystem iostreams system program_options REQUIRED)
 
 ################################################################################
 
@@ -18,6 +18,7 @@ INCLUDE_DIRECTORIES(SYSTEM
 	${BZIP2_INCLUDE_DIR}
 	${Boost_INCLUDE_DIR}
 	${OPENGL_INCLUDE_DIR}
+	${CMAKE_SOURCE_DIR}/contrib/kaguya/include
 	)
 
 LINK_DIRECTORIES("${CMAKE_SOURCE_DIR}/libsiedler2/src" "${CMAKE_SOURCE_DIR}/mygettext/src" "${CMAKE_SOURCE_DIR}/libutil/src" "${CMAKE_SOURCE_DIR}/liblobby/src" "${CMAKE_SOURCE_DIR}/libendian/src")
@@ -46,6 +47,7 @@ AddDirectory(gameData)
 AddDirectory(gameTypes)
 AddDirectory(helpers)
 AddDirectory(ingameWindows)
+AddDirectory(lua)
 AddDirectory(nodeObjs)
 AddDirectory(ogl)
 AddDirectory(pathfinding)
@@ -53,27 +55,10 @@ AddDirectory(world)
 
 ################################################################################
 
+FILE(GLOB RTTR_PO_FILES ../RTTR/languages/*.po)
+
 GETTEXT_CREATE_TRANSLATIONS(../RTTR/languages/rttr.pot ALL
-							../RTTR/languages/rttr-de.po
-							../RTTR/languages/rttr-es.po
-							../RTTR/languages/rttr-sv.po
-							../RTTR/languages/rttr-fi.po
-							../RTTR/languages/rttr-fr.po
-							../RTTR/languages/rttr-ru.po
-							../RTTR/languages/rttr-nl.po
-							../RTTR/languages/rttr-et.po
-							../RTTR/languages/rttr-en_GB.po
-							../RTTR/languages/rttr-sk.po
-							../RTTR/languages/rttr-nds.po
-							../RTTR/languages/rttr-tr.po
-							../RTTR/languages/rttr-pl.po
-							../RTTR/languages/rttr-pt.po
-							../RTTR/languages/rttr-he.po
-							../RTTR/languages/rttr-cs.po
-							../RTTR/languages/rttr-hu.po
-							../RTTR/languages/rttr-it.po
-							../RTTR/languages/rttr-sl.po
-							../RTTR/languages/rttr-nb.po
+							${RTTR_PO_FILES}
 						   )
 
 ################################################################################
@@ -213,7 +198,9 @@ IF (MSVC)
 	SET(s25client_RC "${CMAKE_CURRENT_SOURCE_DIR}/../win32/s25client.rc")
 	SET(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /MANIFEST:NO")
 	# disable warning 4267: 'var' : conversion from 'size_t' to 'type', possible loss of data
-	ADD_DEFINITIONS(/wd"4267")
+	ADD_DEFINITIONS(/wd4267)
+	# Signed/Unsigned operations
+	ADD_DEFINITIONS(/we4389)
 	ADD_DEFINITIONS(/WX) # warning = error
 	ADD_DEFINITIONS(/MP) # parallel compilation
 ELSE()

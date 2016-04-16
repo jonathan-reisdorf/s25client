@@ -61,12 +61,6 @@ const boost::array<unsigned char, WARE_TYPES_COUNT> STD_TRANSPORT =
     2, 12, 12, 12, 12, 12, 12, 12, 12, 12, 10, 10, 12, 12, 12, 13, 1, 3, 11, 11, 11, 1, 9, 7, 8, 1, 1, 11, 0, 4, 5, 6, 11, 11, 1
 }};
 
-///////////////////////////////////////////////////////////////////////////////
-/**
- *  Konstruktor von @p GameClientPlayer.
- *
- *  @author OLiver
- */
 GameClientPlayer::GameClientPlayer(const unsigned playerid):
 		GamePlayerInfo(playerid), gwg(NULL), is_lagging(false),
 		hqPos(MapPoint::Invalid()), emergency(false)
@@ -1775,38 +1769,38 @@ void GameClientPlayer::Pact::Serialize(SerializedGameData& sgd)
     sgd.PushBool(want_cancel);
 }
 
-/// Macht Bündnisvorschlag an diesen Spieler
-void GameClientPlayer::SuggestPact(const unsigned char other_player, const PactType pt, const unsigned duration)
+void GameClientPlayer::PactChanged(const PactType pt)
 {
-    pacts[other_player][pt].accepted = false;
-    pacts[other_player][pt].duration = duration;
-    pacts[other_player][pt].start = GAMECLIENT.GetGFNumber();
+    // Recheck military flags as the border (to an enemy) might have changed
+    RecalcMilitaryFlags();
 
-    // Post-Message generieren, wenn dieser Pakt den lokalen Spieler betrifft
-    if(other_player == GAMECLIENT.GetPlayerID())
-        GAMECLIENT.SendPostMessage(new DiplomacyPostQuestion(pacts[other_player][pt].start, playerid, pt, duration));
+    // Ggf. den GUI Bescheid sagen, um Sichtbarkeiten etc. neu zu berechnen
+    if(pt == TREATY_OF_ALLIANCE && GAMECLIENT.GetPlayerID() == playerid)
+    {
+        if(gwg->GetGameInterface())
+            gwg->GetGameInterface()->GI_TreatyOfAllianceChanged();
+    }
 }
 
-/// Akzeptiert ein bestimmtes Bündnis, welches an diesen Spieler gemacht wurde
-void GameClientPlayer::AcceptPact(const unsigned id, const PactType pt, const unsigned char other_player)
+void GameClientPlayer::SuggestPact(const unsigned char targetPlayer, const PactType pt, const unsigned duration)
 {
-    if(!pacts[other_player][pt].accepted && pacts[other_player][pt].start == id)
+    pacts[targetPlayer][pt].accepted = false;
+    pacts[targetPlayer][pt].duration = duration;
+    pacts[targetPlayer][pt].start = GAMECLIENT.GetGFNumber();
+
+    // Post-Message generieren, wenn dieser Pakt den lokalen Spieler betrifft
+    if(targetPlayer == GAMECLIENT.GetPlayerID())
+        GAMECLIENT.SendPostMessage(new DiplomacyPostQuestion(pacts[targetPlayer][pt].start, playerid, pt, duration));
+}
+
+void GameClientPlayer::AcceptPact(const unsigned id, const PactType pt, const unsigned char targetPlayer)
+{
+    if(!pacts[targetPlayer][pt].accepted && pacts[targetPlayer][pt].start == id)
     {
-        // Pakt einwickeln
-        MakePact(pt, other_player, pacts[other_player][pt].duration);
-        GAMECLIENT.GetPlayer(other_player).MakePact(pt, playerid, pacts[other_player][pt].duration);
-
-        // Besetzung der Militärgebäude der jeweiligen Spieler überprüfen, da ja jetzt neue Feinde oder neue
-        // Verbündete sich in Grenznähe befinden könnten
-        this->RegulateAllTroops();
-        GAMECLIENT.GetPlayer(other_player).RecalcMilitaryFlags();
-
-        // Ggf. den GUI Bescheid sagen, um Sichtbarkeiten etc. neu zu berechnen
-        if(pt == TREATY_OF_ALLIANCE && (GAMECLIENT.GetPlayerID() == playerid || GAMECLIENT.GetPlayerID() == other_player))
-        {
-            if(gwg->GetGameInterface())
-                gwg->GetGameInterface()->GI_TreatyOfAllianceChanged();
-        }
+        MakePact(pt, targetPlayer, pacts[targetPlayer][pt].duration);
+        gwg->GetPlayer(targetPlayer).MakePact(pt, playerid, pacts[targetPlayer][pt].duration);
+        PactChanged(pt);
+        gwg->GetPlayer(targetPlayer).PactChanged(pt);
     }
 }
 
@@ -1818,10 +1812,9 @@ void GameClientPlayer::MakePact(const PactType pt, const unsigned char other_pla
     pacts[other_player][pt].duration = duration;
     pacts[other_player][pt].want_cancel = false;
 
-    // Den Spielern eine Informationsnachricht schicken
+    // Send this player a message
     if(GAMECLIENT.GetPlayerID() == playerid)
         GAMECLIENT.SendPostMessage(new DiplomacyPostInfo(other_player, DiplomacyPostInfo::ACCEPT, pt));
-
 }
 
 /// Zeigt an, ob ein Pakt besteht
@@ -1838,25 +1831,20 @@ GameClientPlayer::PactState GameClientPlayer::GetPactState(const PactType pt, co
             if(pacts[other_player][pt].accepted)
                 return ACCEPTED;
         }
-        else if(GAMECLIENT.GetGFNumber() <= pacts[other_player][pt].start
-                + pacts[other_player][pt].duration )
+        else if(GAMECLIENT.GetGFNumber() <= pacts[other_player][pt].start + pacts[other_player][pt].duration )
             return ACCEPTED;
-
     }
 
     return NO_PACT;
 }
 
 ///all allied players get a letter with the location
-void GameClientPlayer::NotifyAlliesOfLocation(const MapPoint pt, unsigned char allyplayerid)
+void GameClientPlayer::NotifyAlliesOfLocation(const MapPoint pt)
 {	
 	for(unsigned i = 0; i < GAMECLIENT.GetPlayerCount(); ++i)
     {
-        GameClientPlayer& p = GAMECLIENT.GetPlayer(i);
-		if(i != allyplayerid && p.IsAlly(allyplayerid+1) && GAMECLIENT.GetPlayerID() == i)
-		{	            		
+		if(i != playerid && IsAlly(i) && GAMECLIENT.GetPlayerID() == i)
             GAMECLIENT.SendPostMessage(new PostMsgWithLocation(_("Your ally wishes to notify you of this location"), PMC_DIPLOMACY, pt));
-		}
 	}
 }
 
@@ -1907,14 +1895,8 @@ void GameClientPlayer::CancelPact(const PactType pt, const unsigned char otherPl
                 unsigned char client_other_player = (GAMECLIENT.GetPlayerID() == playerid) ? otherPlayerIdx : playerid;
                 GAMECLIENT.SendPostMessage(new DiplomacyPostInfo(client_other_player, DiplomacyPostInfo::CANCEL, pt));
             }
-
-            // Ggf. den GUI Bescheid sagen, um Sichtbarkeiten etc. neu zu berechnen
-            if(pt == TREATY_OF_ALLIANCE && (GAMECLIENT.GetPlayerID() == playerid
-                                            || GAMECLIENT.GetPlayerID() == otherPlayerIdx))
-            {
-                if(gwg->GetGameInterface())
-                    gwg->GetGameInterface()->GI_TreatyOfAllianceChanged();
-            }
+            PactChanged(pt);
+            otherPlayer.PactChanged(pt);
         }
         // Ansonsten den anderen Spieler fragen, ob der das auch so sieht
         else if(otherPlayerIdx == GAMECLIENT.GetPlayerID())
@@ -2318,15 +2300,23 @@ void GameClientPlayer::TestPacts()
 {
     for(unsigned i = 0; i < GAMECLIENT.GetPlayerCount(); ++i)
     {
-        // Wenn wir merken, dass der Friedensvertrag abgelaufen ist, berechnen wir die Sichtbarkeiten neu
-        if(GetPactState(TREATY_OF_ALLIANCE, i) == NO_PACT && pacts[i][TREATY_OF_ALLIANCE].duration != 0)
+        if(i==playerid)
+            continue;
+
+        for(unsigned pactId = 0; pactId < PACTS_COUNT; pactId++)
         {
-            pacts[i][TREATY_OF_ALLIANCE].duration = 0;
-            if(GAMECLIENT.GetPlayerID() == playerid)
+            // Pact not running
+            if(pacts[i][pactId].duration == 0)
+                continue;
+            if(GetPactState(PactType(pactId), i) == NO_PACT)
             {
-                // Ggf. den GUI Bescheid sagen, um Sichtbarkeiten etc. neu zu berechnen
-                if(gwg->GetGameInterface())
-                    gwg->GetGameInterface()->GI_TreatyOfAllianceChanged();
+                // Pact was running but is expired -> Cancel for both players
+                pacts[i][pactId].duration = 0;
+                RTTR_Assert(gwg->GetPlayer(i).pacts[playerid][pactId].duration);
+                gwg->GetPlayer(i).pacts[playerid][pactId].duration = 0;
+                // And notify
+                PactChanged(PactType(pactId));
+                gwg->GetPlayer(i).PactChanged(PactType(pactId));
             }
         }
     }
@@ -2335,8 +2325,8 @@ void GameClientPlayer::TestPacts()
 
 bool GameClientPlayer::CanBuildCatapult() const
 {
-    // Wenn ADDON_LIMIT_CATAPULTS nicht aktiv ist, bauen immer erlaubt
-    if(!GAMECLIENT.GetGGS().isEnabled(ADDON_LIMIT_CATAPULTS)) //-V807
+    // Wenn AddonId::LIMIT_CATAPULTS nicht aktiv ist, bauen immer erlaubt
+    if(!GAMECLIENT.GetGGS().isEnabled(AddonId::LIMIT_CATAPULTS)) //-V807
         return true;
 
     BuildingCount bc;
@@ -2345,17 +2335,17 @@ bool GameClientPlayer::CanBuildCatapult() const
     unsigned int max = 0;
 
     // proportional?
-    if(GAMECLIENT.GetGGS().getSelection(ADDON_LIMIT_CATAPULTS) == 1)
+    if(GAMECLIENT.GetGGS().getSelection(AddonId::LIMIT_CATAPULTS) == 1)
     {
         max = int(bc.building_counts[BLD_BARRACKS] * 0.125 +
                   bc.building_counts[BLD_GUARDHOUSE] * 0.25 +
                   bc.building_counts[BLD_WATCHTOWER] * 0.5 +
                   bc.building_counts[BLD_FORTRESS] + 0.111); // to avoid rounding errors
     }
-    else if(GAMECLIENT.GetGGS().getSelection(ADDON_LIMIT_CATAPULTS) < 8)
+    else if(GAMECLIENT.GetGGS().getSelection(AddonId::LIMIT_CATAPULTS) < 8)
     {
         const boost::array<unsigned, 6> limits = {{ 0, 3, 5, 10, 20, 30}};
-        max = limits[GAMECLIENT.GetGGS().getSelection(ADDON_LIMIT_CATAPULTS) - 2];
+        max = limits[GAMECLIENT.GetGGS().getSelection(AddonId::LIMIT_CATAPULTS) - 2];
     }
 
     return bc.building_counts[BLD_CATAPULT] + bc.building_site_counts[BLD_CATAPULT] < max;

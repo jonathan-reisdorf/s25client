@@ -7,7 +7,7 @@ class nobBaseWarehouse;
 
 class iwTrade : public IngameWindow
 {
-        nobBaseWarehouse& wh;              ///< Das zugehörige Gebäudeobjekt
+        nobBaseWarehouse& wh;              /// Das zugehörige Gebäudeobjekt
         /// Possible wares
         std::vector<GoodType> wares;
         /// Possible figures
@@ -23,7 +23,7 @@ class iwTrade : public IngameWindow
         void Msg_PaintBefore() override;
         void Msg_PaintAfter() override;
         void Msg_ButtonClick(const unsigned int ctrl_id) override;
-        void Msg_ComboSelectItem(const unsigned ctrl_id, const unsigned short selection) override;
+        void Msg_ComboSelectItem(const unsigned ctrl_id, const int selection) override;
         unsigned GetPossibleTradeAmount(const Job job) const;
         unsigned GetPossibleTradeAmount(const GoodType good) const;
 };

@@ -24,6 +24,7 @@
 #include "Random.h"
 #include "GameManager.h"
 #include "ClientInterface.h"
+#include "libutil/src/Log.h"
 
 // Include last!
 #include "DebugNew.h" // IWYU pragma: keep
@@ -31,6 +32,7 @@
 void GameClient::ExecuteGameFrame_Replay()
 {
     randcheckinfo.rand = RANDOM.GetCurrentRandomValue();
+    AsyncChecksum checksum(randcheckinfo.rand);
 
     RTTR_Assert(replayinfo.next_gf >= framesinfo.gf_nr || framesinfo.gf_nr > replayinfo.replay.lastGF_);
 
@@ -67,7 +69,7 @@ void GameClient::ExecuteGameFrame_Replay()
             ExecuteAllGCs(msg);
 
             // Replay ist NSYNC äh ASYNC!
-            if(msg.checksum != 0 && msg.checksum != (unsigned)randcheckinfo.rand)
+            if(msg.checksum.randState != 0 &&  msg.checksum != checksum)
             {
                 if(replayinfo.async == 0)
                 {
@@ -76,8 +78,13 @@ void GameClient::ExecuteGameFrame_Replay()
                     sprintf(text, _("Warning: The played replay is not in sync with the original match. (GF: %u)"), framesinfo.gf_nr);
 
                     // Messenger im Game (prints to console too)
-                    if(ci && GLOBALVARS.ingame)
+                    if(ci)
                         ci->CI_ReplayAsync(text);
+
+                    LOG.lprintf("Async at GF %u: Checksum %i:%i ObjCt %u:%u ObjIdCt %u:%u\n", framesinfo.gf_nr,
+                        msg.checksum.randState, checksum.randState,
+                        msg.checksum.objCt, checksum.objCt,
+                        msg.checksum.objIdCt, checksum.objIdCt);
 
                     // pausieren
                     framesinfo.isPaused = true;
@@ -105,7 +112,7 @@ void GameClient::ExecuteGameFrame_Replay()
         sprintf(text, _("Notice: The played replay has ended. (GF: %u, %dh %dmin %ds, TF: %u, AVG_FPS: %u)"), framesinfo.gf_nr, GAMEMANAGER.GetRuntime() / 3600, ((GAMEMANAGER.GetRuntime()) % 3600) / 60, (GameManager::inst().GetRuntime()) % 3600 % 60, GameManager::inst().GetFrameCount(), GameManager::inst().GetAverageFPS());
 
         // Messenger im Game
-        if(ci && GLOBALVARS.ingame)
+        if(ci)
             ci->CI_ReplayEndReached(text);
 
         if(replayinfo.async != 0)
@@ -113,7 +120,7 @@ void GameClient::ExecuteGameFrame_Replay()
             char text[256];
             sprintf(text, _("Notice: Overall asynchronous frame count: %u"), replayinfo.async);
             // Messenger im Game
-            if(ci && GLOBALVARS.ingame)
+            if(ci)
                 ci->CI_ReplayEndReached(text);
         }
 

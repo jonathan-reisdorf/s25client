@@ -25,14 +25,14 @@
 class GlobalVars : public Singleton<GlobalVars>
 {
     public:
-        /// Konstruktor von @p GlobalVars.
         GlobalVars();
 
     public:
         bool notdone;
-        bool ingame;
         bool ext_vbo;
         bool ext_swapcontrol;
+        bool isTest; // Whether we are in test mode
+        bool errorOccured; // Whether an error has occured (for test validation)
 };
 
 ///////////////////////////////////////////////////////////////////////////////

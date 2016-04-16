@@ -23,36 +23,21 @@
 #include "GameSavedFile.h"
 #include "GamePlayerInfo.h"
 #include "helpers/Deleter.h"
-#include "../libutil/src/Serializer.h"
-#include "../libutil/src/Log.h"
+#include "libutil/src/Serializer.h"
+#include "libutil/src/Log.h"
 #include <boost/interprocess/smart_ptr/unique_ptr.hpp>
 #include <cstring>
 
 // Include last!
 #include "DebugNew.h" // IWYU pragma: keep
 
-///////////////////////////////////////////////////////////////////////////////
-/**
- *
- *  @author OLiver
- */
 SavedFile::SavedFile() : save_time(0)
 {
 }
 
-///////////////////////////////////////////////////////////////////////////////
-/**
- *
- *  @author OLiver
- */
 SavedFile::~SavedFile()
 {}
 
-///////////////////////////////////////////////////////////////////////////////
-/**
- *
- *  @author OLiver
- */
 void SavedFile::WriteVersion(BinaryFile& file, unsigned int signature_length, const char* signature, unsigned short version)
 {
     // Signatur schreiben
@@ -65,11 +50,6 @@ void SavedFile::WriteVersion(BinaryFile& file, unsigned int signature_length, co
     file.WriteUnsignedShort(version);
 }
 
-///////////////////////////////////////////////////////////////////////////////
-/**
- *
- *  @author OLiver
- */
 bool SavedFile::ValidateFile(BinaryFile& file, unsigned int signature_length, const char* signature, unsigned short version)
 {
     char read_signature[32];
@@ -99,11 +79,6 @@ bool SavedFile::ValidateFile(BinaryFile& file, unsigned int signature_length, co
     return true;
 }
 
-///////////////////////////////////////////////////////////////////////////////
-/**
- *
- *  @author OLiver
- */
 void SavedFile::WritePlayerData(BinaryFile& file)
 {
     // Spielerdaten
@@ -115,17 +90,12 @@ void SavedFile::WritePlayerData(BinaryFile& file)
         {
             file.WriteShortString(it->name);
             file.WriteUnsignedChar(it->nation);
-            file.WriteUnsignedChar(it->color);
+            file.WriteUnsignedInt(it->color);
             file.WriteUnsignedChar(it->team);
         }
     }
 }
 
-///////////////////////////////////////////////////////////////////////////////
-/**
- *
- *  @author OLiver
- */
 void SavedFile::ReadPlayerData(BinaryFile& file)
 {
     for(std::vector<Player>::iterator it = players.begin(); it != players.end(); ++it)
@@ -136,7 +106,7 @@ void SavedFile::ReadPlayerData(BinaryFile& file)
         {
             it->name = file.ReadShortString();
             it->nation = Nation(file.ReadUnsignedChar());
-            it->color = file.ReadUnsignedChar();
+            it->color = file.ReadUnsignedInt();
             it->team = file.ReadUnsignedChar();
         }
     }
@@ -173,4 +143,3 @@ void SavedFile::ReadGGS(BinaryFile& file)
 
     ggs.Deserialize(ser);
 }
-

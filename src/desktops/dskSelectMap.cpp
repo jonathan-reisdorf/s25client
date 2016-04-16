@@ -142,11 +142,6 @@ dskSelectMap::dskSelectMap(const CreateServerInfo& csi)
     GAMECLIENT.SetInterface(this);
 }
 
-///////////////////////////////////////////////////////////////////////////////
-/**
- *
- *  @author OLiver
- */
 dskSelectMap::~dskSelectMap()
 {
 }
@@ -157,7 +152,7 @@ dskSelectMap::~dskSelectMap()
  *  @author OLiver
  *  @author FloSoft
  */
-void dskSelectMap::Msg_OptionGroupChange(const unsigned int  /*ctrl_id*/, const unsigned short selection)
+void dskSelectMap::Msg_OptionGroupChange(const unsigned int  /*ctrl_id*/, const int selection)
 {
     ctrlTable* table = GetCtrl<ctrlTable>(1);
 
@@ -184,7 +179,7 @@ void dskSelectMap::Msg_OptionGroupChange(const unsigned int  /*ctrl_id*/, const 
  *
  *  @author FloSoft
  */
-void dskSelectMap::Msg_TableSelectItem(const unsigned int ctrl_id, const unsigned short selection)
+void dskSelectMap::Msg_TableSelectItem(const unsigned int ctrl_id, const int selection)
 {
     switch(ctrl_id)
     {
@@ -234,11 +229,6 @@ void dskSelectMap::GoBack()
         WINDOWMANAGER.Switch(new dskDirectIP);
 }
 
-///////////////////////////////////////////////////////////////////////////////
-/**
- *
- *  @author OLiver
- */
 void dskSelectMap::Msg_ButtonClick(const unsigned int ctrl_id)
 {
     switch(ctrl_id)
@@ -259,7 +249,7 @@ void dskSelectMap::Msg_ButtonClick(const unsigned int ctrl_id)
     }
 }
 
-void dskSelectMap::Msg_TableChooseItem(const unsigned  /*ctrl_id*/, const unsigned short  /*selection*/)
+void dskSelectMap::Msg_TableChooseItem(const unsigned ctrl_id, const unsigned selection)
 {
     // Doppelklick auf bestimmte Map -> weiter
     StartServer();
@@ -290,29 +280,23 @@ void dskSelectMap::StartServer()
     }
 }
 
-///////////////////////////////////////////////////////////////////////////////
-/**
- *
- *  @author OLiver
- */
 void dskSelectMap::Msg_MsgBoxResult(const unsigned msgbox_id, const MsgboxResult  /*mbr*/)
 {
     if(msgbox_id == 0) // Verbindung zu Server verloren?
     {
         GAMECLIENT.Stop();
 
-        if(LOBBYCLIENT.LoggedIn()) // steht die Lobbyverbindung noch?
+        if(csi.type == ServerType::LOBBY &&  LOBBYCLIENT.LoggedIn()) // steht die Lobbyverbindung noch?
             WINDOWMANAGER.Switch(new dskLobby);
-        else
+        else if(csi.type == ServerType::LOBBY)
             WINDOWMANAGER.Switch(new dskDirectIP);
+        else if(csi.type == ServerType::LAN)
+            WINDOWMANAGER.Switch(new dskLAN);
+        else
+            WINDOWMANAGER.Switch(new dskSinglePlayer);
     }
 }
 
-///////////////////////////////////////////////////////////////////////////////
-/**
- *
- *  @author OLiver
- */
 void dskSelectMap::CI_NextConnectState(const ConnectState cs)
 {
     switch(cs)
@@ -327,17 +311,13 @@ void dskSelectMap::CI_NextConnectState(const ConnectState cs)
 
 }
 
-///////////////////////////////////////////////////////////////////////////////
-/**
- *
- *  @author OLiver
- */
 void dskSelectMap::CI_Error(const ClientError ce)
 {
     switch(ce)
     {
         case CE_INCOMPLETEMESSAGE:
         case CE_CONNECTIONLOST:
+        case CE_WRONGMAP:
         {
             // Verbindung zu Server/Lobby abgebrochen
             const std::string errors[] =
@@ -345,10 +325,12 @@ void dskSelectMap::CI_Error(const ClientError ce)
                 _("Incomplete message was received!"),
                 "",
                 "",
-                _("Lost connection to server!")
+                _("Lost connection to server!"),
+                "",
+                _("Map transmission was corrupt!")
             };
 
-            WINDOWMANAGER.Show(new iwMsgbox(_("Error"), errors[ce], this, MSB_OK, MSB_EXCLAMATIONRED, id_));
+            WINDOWMANAGER.Show(new iwMsgbox(_("Error"), errors[ce], this, MSB_OK, MSB_EXCLAMATIONRED, 0));
         } break;
         default: break;
     }

@@ -19,21 +19,12 @@
 // Header
 #include "defines.h" // IWYU pragma: keep
 #include "iwStorehouse.h"
-
 #include "buildings/nobStorehouse.h"
 
 // Include last!
 #include "DebugNew.h" // IWYU pragma: keep
-class GameWorldViewer;
-class dskGameInterface;
 
-///////////////////////////////////////////////////////////////////////////////
-/**
- *  Konstruktor von @p iwStorehouse.
- *
- *  @author OLiver
- */
-iwStorehouse::iwStorehouse(GameWorldViewer* const gwv, dskGameInterface* const gi, nobStorehouse* sh)
-    : iwBaseWarehouse(gwv, gi, _("Storehouse"), 2, sh)
+iwStorehouse::iwStorehouse(GameWorldView& gwv, nobStorehouse* sh)
+    : iwBaseWarehouse(gwv, _("Storehouse"), 2, sh)
 {
 }

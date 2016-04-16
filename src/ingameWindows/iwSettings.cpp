@@ -32,15 +32,8 @@
 
 // Include last!
 #include "DebugNew.h" // IWYU pragma: keep
-class dskGameInterface;
 
-///////////////////////////////////////////////////////////////////////////////
-/**
- *  Konstruktor von @p iwSettings.
- *
- *  @author NastX
- */
-iwSettings::iwSettings(dskGameInterface*  /*gameDesktop*/)
+iwSettings::iwSettings()
     : IngameWindow(CGI_SETTINGS, 0xFFFF, 0xFFFF, 370, 172, _("Settings"), LOADER.GetImageN("resource", 41))
 {
     AddText(  46,  15,  40, _("Fullscreen resolution:"), COLOR_YELLOW, 0, NormalFont);
@@ -85,12 +78,6 @@ iwSettings::iwSettings(dskGameInterface*  /*gameDesktop*/)
     }
 }
 
-///////////////////////////////////////////////////////////////////////////////
-/**
- *
- *
- *  @author NastX
- */
 iwSettings::~iwSettings()
 {
     ctrlComboBox* SizeCombo = GetCtrl<ctrlComboBox>(0);
@@ -128,13 +115,7 @@ iwSettings::~iwSettings()
 #endif
 }
 
-///////////////////////////////////////////////////////////////////////////////
-/**
- *
- *
- *  @author NastX
- */
-void iwSettings::Msg_OptionGroupChange(const unsigned int ctrl_id, const unsigned short selection)
+void iwSettings::Msg_OptionGroupChange(const unsigned int ctrl_id, const int selection)
 {
     switch(ctrl_id)
     {
@@ -152,12 +133,6 @@ void iwSettings::Msg_OptionGroupChange(const unsigned int ctrl_id, const unsigne
     }
 }
 
-///////////////////////////////////////////////////////////////////////////////
-/**
- *
- *
- *  @author NastX
- */
 void iwSettings::Msg_CheckboxChange(const unsigned int ctrl_id, const bool checked)
 {
     switch(ctrl_id)

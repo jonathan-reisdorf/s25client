@@ -45,7 +45,6 @@
 #include "libsiedler2/src/ArchivItem_Ini.h"
 #include "libsiedler2/src/ArchivItem_Palette.h"
 #include "libsiedler2/src/ArchivItem_Text.h"
-#include "libutil/src/colors.h"
 #include <boost/filesystem.hpp>
 #include <boost/assign/std/vector.hpp>
 #include <iomanip>
@@ -56,23 +55,11 @@
 // Include last!
 #include "DebugNew.h" // IWYU pragma: keep
 
-///////////////////////////////////////////////////////////////////////////////
-/**
- *  Konstruktor von @p Loader.
- *
- *  @author FloSoft
- */
 Loader::Loader() : lastgfx(0xFF), map_gfx(NULL), tex_gfx(NULL), stp(NULL)
 {
     std::fill(nation_gfx.begin(), nation_gfx.end(), static_cast<libsiedler2::ArchivInfo*>(NULL));
 }
 
-///////////////////////////////////////////////////////////////////////////////
-/**
- *  Destruktor von @p Loader.
- *
- *  @author FloSoft
- */
 Loader::~Loader()
 {
     delete stp;
@@ -950,6 +937,11 @@ glArchivItem_Bitmap* Loader::GetImageN(const std::string& file, unsigned int nr)
     return convertChecked<glArchivItem_Bitmap*>(files_[file].archiv.get(nr));
 }
 
+glArchivItem_Bitmap* Loader::GetImage(const std::string& file, const std::string& name)
+{
+    return convertChecked<glArchivItem_Bitmap*>(files_[file].archiv.find(name));
+}
+
 glArchivItem_Bitmap_Player* Loader::GetPlayerImage(const std::string& file, unsigned int nr)
 {
     return convertChecked<glArchivItem_Bitmap_Player*>(files_[file].archiv.get(nr));
@@ -1214,7 +1206,7 @@ bool Loader::LoadFile(const std::string& filePath, const libsiedler2::ArchivItem
     for(std::vector<std::string>::iterator itFile = lst.begin(); itFile != lst.end(); ++itFile)
     {
         // read file number, to set the index correctly
-        std::string filename = bfs::path(*itFile).filename().string();
+        const std::string filename = bfs::path(*itFile).filename().string();
         std::stringstream nrs;
         int nr = -1;
         nrs << filename;
@@ -1273,7 +1265,7 @@ bool Loader::LoadFile(const std::string& filePath, const libsiedler2::ArchivItem
                 return false;
             }
 
-            out->setName(*itFile);
+            out->setName(filename);
             out->setNx(nx);
             out->setNy(ny);
 
@@ -1306,12 +1298,14 @@ bool Loader::LoadFile(const std::string& filePath, const libsiedler2::ArchivItem
         }else if( wf.back() == "fon" ) // Font
         {
             glArchivItem_Font* font = new glArchivItem_Font();
-            font->setName(*itFile);
+            font->setName(filename);
             font->setDx(dx);
             font->setDy(dy);
 
             if(!LoadFile(*itFile, palette, *font))
                 return false;
+            else
+                delete font;
 
             item = font;
         }

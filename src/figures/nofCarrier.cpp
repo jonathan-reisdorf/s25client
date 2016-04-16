@@ -112,12 +112,6 @@ AnimationsType fillAnimations()
 }
 static const AnimationsType ANIMATIONS = fillAnimations();
 
-///////////////////////////////////////////////////////////////////////////////
-/**
- *  Konstruktor von @p nofCarrier.
- *
- *  @author OLiver
- */
 
 const boost::array<Job, 3> JOB_TYPES = {{ JOB_HELPER, JOB_PACKDONKEY, JOB_BOATCARRIER }};
 
@@ -132,12 +126,6 @@ nofCarrier::nofCarrier(const CarrierType ct, const MapPoint pos,
 {
 }
 
-///////////////////////////////////////////////////////////////////////////////
-/**
- *
- *
- *  @author OLiver
- */
 nofCarrier::nofCarrier(SerializedGameData& sgd, unsigned int obj_id)
     : noFigure(sgd, obj_id),
       ct( CarrierType(sgd.PopUnsignedChar()) ),
@@ -160,12 +148,6 @@ nofCarrier::nofCarrier(SerializedGameData& sgd, unsigned int obj_id)
     }
 }
 
-///////////////////////////////////////////////////////////////////////////////
-/**
- *
- *
- *  @author OLiver
- */
 void nofCarrier::Serialize_nofCarrier(SerializedGameData& sgd) const
 {
     Serialize_noFigure(sgd);
@@ -188,12 +170,6 @@ void nofCarrier::Serialize_nofCarrier(SerializedGameData& sgd) const
     }
 }
 
-///////////////////////////////////////////////////////////////////////////////
-/**
- *
- *
- *  @author OLiver
- */
 nofCarrier::~nofCarrier()
 {
     // Ware vernichten (physisch)
@@ -202,12 +178,6 @@ nofCarrier::~nofCarrier()
 
 
 
-///////////////////////////////////////////////////////////////////////////////
-/**
- *
- *
- *  @author OLiver
- */
 void nofCarrier::Destroy_nofCarrier()
 {
     RTTR_Assert(!workplace);
@@ -220,12 +190,6 @@ void nofCarrier::Destroy_nofCarrier()
 }
 
 
-///////////////////////////////////////////////////////////////////////////////
-/**
- *
- *
- *  @author OLiver
- */
 void nofCarrier::Draw(int x, int y)
 {
     // Unterscheiden, um was für eine Art von Träger es sich handelt
@@ -272,7 +236,7 @@ void nofCarrier::Draw(int x, int y)
                         {
                             // Nein, dann Animation abspielen
                             LOADER.GetPlayerImage("rom_bobs", ANIMATIONS[fat ? 1 : 0][animation_id][(current_gf - next_animation) / FRAME_GF])
-                            ->Draw(x, y, 0, 0, 0, 0, 0, 0, COLOR_WHITE, COLORS[gwg->GetPlayer(player).color]);
+                            ->Draw(x, y, 0, 0, 0, 0, 0, 0, COLOR_WHITE, gwg->GetPlayer(player).color);
                         }
                         else     // Silvesteregg
                         {
@@ -280,7 +244,7 @@ void nofCarrier::Draw(int x, int y)
 
                             if (bmp)
                             {
-                                bmp->Draw(x - 26, y - 104, 0, 0, 0, 0, 0, 0, COLOR_WHITE, COLORS[gwg->GetPlayer(player).color]);
+                                bmp->Draw(x - 26, y - 104, 0, 0, 0, 0, 0, 0, COLOR_WHITE, gwg->GetPlayer(player).color);
                             }
                             else
                             {
@@ -293,21 +257,21 @@ void nofCarrier::Draw(int x, int y)
 
                 if(!animation)
                 {
-                    LOADER.bob_jobs_cache[gwg->GetPlayer(player).nation][fat ? JOB_TYPES_COUNT : 0][GetCurMoveDir()][2].draw(x, y, COLOR_WHITE, COLORS[gwg->GetPlayer(player).color]);
+                    LOADER.bob_jobs_cache[gwg->GetPlayer(player).nation][fat ? JOB_TYPES_COUNT : 0][GetCurMoveDir()][2].draw(x, y, COLOR_WHITE, gwg->GetPlayer(player).color);
                 }
                 else
                     // Steht und wartet (ohne Ware)
-//                  LOADER.GetBobN("jobs")->Draw(0,dir,fat,2,x,y,COLORS[gwg->GetPlayer(player).color]);
+//                  LOADER.GetBobN("jobs")->Draw(0,dir,fat,2,x,y,gwg->GetPlayer(player).color);
                     DrawShadow(x, y, 0, GetCurMoveDir());
             }
             else if(state == CARRS_WAITFORWARESPACE || (waiting_for_free_node && !pause_walked_gf && carried_ware))
             {
                 // Steht und wartet (mit Ware)
-                LOADER.carrier_cache[carried_ware->type][GetCurMoveDir()][2][fat].draw(x, y, COLOR_WHITE, COLORS[gwg->GetPlayer(player).color]);
+                LOADER.carrier_cache[carried_ware->type][GetCurMoveDir()][2][fat].draw(x, y, COLOR_WHITE, gwg->GetPlayer(player).color);
 
                 // Japaner-Schild-Animation existiert leider nicht --> Römerschild nehmen
 //              LOADER.GetBobN("carrier")->Draw((carried_ware->type==GD_SHIELDJAPANESE)?GD_SHIELDROMANS:carried_ware->type,
-//                  dir,fat,2,x,y,COLORS[gwg->GetPlayer(player).color]);
+//                  dir,fat,2,x,y,gwg->GetPlayer(player).color);
 //              DrawShadow(x,y,0,dir);
             }
             else
@@ -372,11 +336,11 @@ void nofCarrier::Draw(int x, int y)
             }
             else if(state == CARRS_WAITFORWARE || (waiting_for_free_node && !pause_walked_gf && !carried_ware))
             {
-                LOADER.boat_cache[GetCurMoveDir()][0].draw(x, y, 0xFFFFFFFF, COLORS[gwg->GetPlayer(player).color]);
+                LOADER.boat_cache[GetCurMoveDir()][0].draw(x, y, 0xFFFFFFFF, gwg->GetPlayer(player).color);
             }
             else if(state == CARRS_WAITFORWARESPACE || (waiting_for_free_node && !pause_walked_gf && carried_ware))
             {
-                LOADER.boat_cache[GetCurMoveDir()][0].draw(x, y, 0xFFFFFFFF, COLORS[gwg->GetPlayer(player).color]);
+                LOADER.boat_cache[GetCurMoveDir()][0].draw(x, y, 0xFFFFFFFF, gwg->GetPlayer(player).color);
 
                 // Ware im Boot zeichnen
                 LOADER.GetMapImageN(2350 + carried_ware->type)->Draw(x + WARE_POS_BOAT[GetCurMoveDir() * 2], y + WARE_POS_BOAT[GetCurMoveDir() * 2 + 1]);
@@ -390,7 +354,7 @@ void nofCarrier::Draw(int x, int y)
                 Point<int> realPos = Point<int>(x, y) + CalcFigurRelative();
 
                 // ruderndes Boot zeichnen
-                LOADER.boat_cache[GetCurMoveDir()][ani_step].draw(realPos.x, realPos.y, 0xFFFFFFFF, COLORS[gwg->GetPlayer(player).color]);
+                LOADER.boat_cache[GetCurMoveDir()][ani_step].draw(realPos.x, realPos.y, 0xFFFFFFFF, gwg->GetPlayer(player).color);
 
                 // Läuft normal mit oder ohne Ware
                 if(carried_ware)
@@ -414,12 +378,6 @@ void nofCarrier::SetNewAnimationMoment()
     next_animation = GAMECLIENT.GetGFNumber() + NEXT_ANIMATION + rand() % NEXT_ANIMATION_RANDOM;
 }
 
-///////////////////////////////////////////////////////////////////////////////
-/**
- *
- *
- *  @author OLiver
- */
 void nofCarrier::Walked()
 {
     // Bootssounds ggf. löschen
@@ -609,12 +567,6 @@ void nofCarrier::Walked()
     }
 }
 
-///////////////////////////////////////////////////////////////////////////////
-/**
- *
- *
- *  @author OLiver
- */
 void nofCarrier::LookForWares()
 {
     // Gibts an dieser Flagge etwas, das ich tragen muss?
@@ -641,12 +593,6 @@ void nofCarrier::LookForWares()
     }
 }
 
-///////////////////////////////////////////////////////////////////////////////
-/**
- *
- *
- *  @author OLiver
- */
 void nofCarrier::GoalReached()
 {
     // Erstes Produktivitätsevent anmelden
@@ -690,12 +636,6 @@ void nofCarrier::GoalReached()
     LOG.lprintf("nofCarrier::GoalReached: ERROR: Road of carrier (id: %u) not found!\n", GetObjId());
 }
 
-///////////////////////////////////////////////////////////////////////////////
-/**
- *
- *
- *  @author OLiver
- */
 void nofCarrier::AbrogateWorkplace()
 {
     if(workplace)
@@ -735,22 +675,18 @@ void nofCarrier::LooseWare()
     }
 }
 
-struct IsCoastalAndForFigs
-{
-    const GameWorldGame& gwg;
-    IsCoastalAndForFigs(const GameWorldGame& gwg): gwg(gwg){}
-    
-    bool operator()(const MapPoint& pt) const{
-        return gwg.IsCoastalPoint(pt) && gwg.IsNodeForFigures(pt);
-    }
-};
+namespace{
+    struct IsCoastalAndForFigs
+    {
+        const GameWorldGame& gwg;
+        IsCoastalAndForFigs(const GameWorldGame& gwg): gwg(gwg){}
 
-///////////////////////////////////////////////////////////////////////////////
-/**
- *
- *
- *  @author OLiver
- */
+        bool operator()(const MapPoint& pt) const{
+            return gwg.IsCoastalPoint(pt) && gwg.IsNodeForFigures(pt);
+        }
+    };
+}
+
 void nofCarrier::LostWork()
 {
     workplace = NULL;
@@ -799,12 +735,6 @@ void nofCarrier::LostWork()
     state = CARRS_FIGUREWORK;
 }
 
-///////////////////////////////////////////////////////////////////////////////
-/**
- *
- *
- *  @author OLiver
- */
 void nofCarrier::RoadSplitted(RoadSegment* rs1, RoadSegment* rs2)
 {
     // Bin ich schon auf meinem Arbeitsplatz (=Straße) oder bin ich erst noch auf dem Weg dorthin?
@@ -869,12 +799,6 @@ void nofCarrier::RoadSplitted(RoadSegment* rs1, RoadSegment* rs2)
         otherRoad->setCarrier(1, gwg->GetPlayer(player).OrderDonkey(otherRoad));
 }
 
-///////////////////////////////////////////////////////////////////////////////
-/**
- *
- *
- *  @author OLiver
- */
 void nofCarrier::HandleDerivedEvent(const unsigned int id)
 {
     switch(id)
@@ -910,12 +834,6 @@ void nofCarrier::HandleDerivedEvent(const unsigned int id)
     }
 }
 
-///////////////////////////////////////////////////////////////////////////////
-/**
- *
- *
- *  @author OLiver
- */
 bool nofCarrier::AddWareJob(const noRoadNode* rn)
 {
     // Wenn wir rumstehen, sollten wir mal loslaufen! ^^und ggf umdrehen, genauso wie beim Laufen in die Mitte
@@ -961,12 +879,6 @@ bool nofCarrier::AddWareJob(const noRoadNode* rn)
 
 }
 
-///////////////////////////////////////////////////////////////////////////////
-/**
- *
- *
- *  @author OLiver
- */
 void nofCarrier::RemoveWareJob()
 {
     if(state == CARRS_FETCHWARE)
@@ -991,12 +903,6 @@ void nofCarrier::RemoveWareJob()
     }
 }
 
-///////////////////////////////////////////////////////////////////////////////
-/**
- *
- *
- *  @author OLiver
- */
 void nofCarrier::FetchWare(const bool swap_wares)
 {
     // Ware aufnehmnen
@@ -1016,12 +922,6 @@ void nofCarrier::FetchWare(const bool swap_wares)
         state = CARRS_GOTOMIDDLEOFROAD;
 }
 
-///////////////////////////////////////////////////////////////////////////////
-/**
- *
- *
- *  @author OLiver
- */
 bool nofCarrier::SpaceAtFlag(const bool flag)
 {
     // Interessiert uns nur, wenn wir auf einen freien Platz warten
@@ -1037,12 +937,6 @@ bool nofCarrier::SpaceAtFlag(const bool flag)
 
 }
 
-///////////////////////////////////////////////////////////////////////////////
-/**
- *
- *
- *  @author OLiver
- */
 bool nofCarrier::WantInBuilding(bool* calculated)
 {
     RoadSegment* rs = static_cast<noFlag*>((rs_dir ? cur_rs->GetF1() : cur_rs->GetF2()))->routes[1];

@@ -349,17 +349,19 @@ void nofBuildingWorker::LostWork()
     workplace = NULL;
 }
 
-struct NodeHasResource
-{
-    const GameWorldGame& gwg;
-    const unsigned char res;
-    NodeHasResource(const GameWorldGame& gwg, const unsigned char res):gwg(gwg), res(res){}
-
-    bool operator()(const MapPoint pt)
+namespace{
+    struct NodeHasResource
     {
-        return gwg.IsResourcesOnNode(pt, res);
-    }
-};
+        const GameWorldGame& gwg;
+        const unsigned char res;
+        NodeHasResource(const GameWorldGame& gwg, const unsigned char res):gwg(gwg), res(res){}
+
+        bool operator()(const MapPoint pt)
+        {
+            return gwg.IsResourcesOnNode(pt, res);
+        }
+    };
+}
 
 ///////////////////////////////////////////////////////////////////////////////
 /**
@@ -372,7 +374,7 @@ bool nofBuildingWorker::GetResources(unsigned char type)
 {
     //this makes granite mines work everywhere
     const GlobalGameSettings& settings = GAMECLIENT.GetGGS();
-    if (type == 0 && settings.isEnabled(ADDON_INEXHAUSTIBLE_GRANITEMINES))
+    if (type == 0 && settings.isEnabled(AddonId::INEXHAUSTIBLE_GRANITEMINES))
         return true;
     // in Map-Resource-Koordinaten konvertieren
     type = RESOURCES_MINE_TO_MAP[type];
@@ -398,7 +400,7 @@ bool nofBuildingWorker::GetResources(unsigned char type)
     if(found)
     {
         // Minen / Brunnen unerschöpflich?
-        if( (type == 4 && settings.isEnabled(ADDON_EXHAUSTIBLE_WELLS)) || (type != 4 && !settings.isEnabled(ADDON_INEXHAUSTIBLE_MINES)) )
+        if( (type == 4 && settings.isEnabled(AddonId::EXHAUSTIBLE_WELLS)) || (type != 4 && !settings.isEnabled(AddonId::INEXHAUSTIBLE_MINES)) )
             gwg->ReduceResource(mP);
         return true;
     }
@@ -414,7 +416,7 @@ bool nofBuildingWorker::GetResources(unsigned char type)
             else
                 error = _("This mine is exhausted");
 
-            GAMECLIENT.SendPostMessage(new ImagePostMsgWithLocation(_(error), PMC_GENERAL, pos, workplace->GetBuildingType(), workplace->GetNation()));
+            GAMECLIENT.SendPostMessage(new ImagePostMsgWithLocation(error, PMC_GENERAL, pos, workplace->GetBuildingType(), workplace->GetNation()));
         }
 
         outOfRessourcesMsgSent = true;

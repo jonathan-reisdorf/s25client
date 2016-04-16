@@ -27,12 +27,6 @@
 // Include last!
 #include "DebugNew.h" // IWYU pragma: keep
 
-///////////////////////////////////////////////////////////////////////////////
-/**
- *  Konstruktor von @p ctrlList.
- *
- *  @author OLiver
- */
 ctrlList::ctrlList(Window* parent,
                    unsigned int id,
                    unsigned short x,
@@ -42,30 +36,18 @@ ctrlList::ctrlList(Window* parent,
                    TextureColor tc,
                    glArchivItem_Font* font)
     : Window(x, y, id, parent, width, height),
-      tc(tc), font(font), selection_(0xFFFF), mouseover(0xFFFF)
+      tc(tc), font(font), selection_(-1), mouseover(-1)
 {
     pagesize = (height - 4) / font->getHeight();
 
     AddScrollBar(0, width - 20, 0, 20, height, 20, tc, pagesize);
 }
 
-///////////////////////////////////////////////////////////////////////////////
-/**
- *  Destruktor von @p ctrlList.
- *
- *  @author OLiver
- */
 ctrlList::~ctrlList()
 {
     DeleteAllItems();
 }
 
-///////////////////////////////////////////////////////////////////////////////
-/**
- *
- *
- *  @author FloSoft
- */
 bool ctrlList::Msg_MouseMove(const MouseCoords& mc)
 {
     ctrlScrollBar* scrollbar = GetCtrl<ctrlScrollBar>(0);
@@ -82,19 +64,13 @@ bool ctrlList::Msg_MouseMove(const MouseCoords& mc)
     }
 
     // Mouse-Over deaktivieren und Tooltip entfernen
-    mouseover = 0xFFFF;
+    mouseover = -1;
     WINDOWMANAGER.SetToolTip(this, "");
 
     // Für die Scrollbar weiterleiten
     return scrollbar->Msg_MouseMove(mc);
 }
 
-///////////////////////////////////////////////////////////////////////////////
-/**
- *
- *
- *  @author FloSoft
- */
 bool ctrlList::Msg_LeftDown(const MouseCoords& mc)
 {
     ctrlScrollBar* scrollbar = GetCtrl<ctrlScrollBar>(0);
@@ -117,12 +93,6 @@ bool ctrlList::Msg_LeftDown(const MouseCoords& mc)
     return scrollbar->Msg_LeftDown(mc);
 }
 
-///////////////////////////////////////////////////////////////////////////////
-/**
- *
- *
- *  @author FloSoft
- */
 bool ctrlList::Msg_RightDown(const MouseCoords& mc)
 {
     ctrlScrollBar* scrollbar = GetCtrl<ctrlScrollBar>(0);
@@ -144,12 +114,6 @@ bool ctrlList::Msg_RightDown(const MouseCoords& mc)
     return scrollbar->Msg_RightDown(mc);
 }
 
-///////////////////////////////////////////////////////////////////////////////
-/**
- *
- *
- *  @author FloSoft
- */
 bool ctrlList::Msg_LeftUp(const MouseCoords& mc)
 {
     ctrlScrollBar* scrollbar = GetCtrl<ctrlScrollBar>(0);
@@ -158,7 +122,7 @@ bool ctrlList::Msg_LeftUp(const MouseCoords& mc)
     if(Coll(mc.x, mc.y, GetX() + 2, GetY() + 2, width_ - 22, height_ - 4))
     {
         // Doppelklick? Dann noch einen extra Eventhandler aufrufen
-        if(mc.dbl_click && parent_)
+        if(mc.dbl_click && parent_ && selection_ >= 0)
             parent_->Msg_ListChooseItem(id_, selection_);
 
         return true;
@@ -168,12 +132,6 @@ bool ctrlList::Msg_LeftUp(const MouseCoords& mc)
     return scrollbar->Msg_LeftUp(mc);
 }
 
-///////////////////////////////////////////////////////////////////////////////
-/**
- *
- *
- *  @author Divan
- */
 bool ctrlList::Msg_WheelUp(const MouseCoords& mc)
 {
     // Forward to ScrollBar
@@ -190,12 +148,6 @@ bool ctrlList::Msg_WheelUp(const MouseCoords& mc)
     return false;
 }
 
-///////////////////////////////////////////////////////////////////////////////
-/**
- *
- *
- *  @author Divan
- */
 bool ctrlList::Msg_WheelDown(const MouseCoords& mc)
 {
     // Forward to ScrollBar
@@ -281,7 +233,7 @@ void ctrlList::SetString(const std::string& text, const unsigned id)
 void ctrlList::DeleteAllItems()
 {
     lines.clear();
-    selection_ = 0xFFFF;
+    selection_ = -1;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -364,6 +316,6 @@ void ctrlList::Remove(const unsigned short index)
         if(selection_)
             --selection_;
         else
-            selection_ = 0xFFFF;
+            selection_ = -1;
     }
 }

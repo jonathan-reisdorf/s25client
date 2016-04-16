@@ -29,13 +29,13 @@
 #include "GlobalGameSettings.h"
 #include "factories/GameCommandFactory.h"
 #include "gameTypes/SettingsTypes.h"
+#include "gameTypes/MapInfo.h"
 #include "gameData/PlayerConsts.h"
 #include "gameData/MilitaryConsts.h"
 #include "FramesInfo.h"
 
 class AIBase;
 class ClientInterface;
-class Savegame;
 class GameMessage_GameCommand;
 class GameWorldViewer;
 class PostMsg;
@@ -56,6 +56,7 @@ class GameClient : public Singleton<GameClient, SingletonPolicies::WithLongevity
             CS_STOPPED = 0,
             CS_CONNECT,
             CS_CONFIG,
+            CS_LOADING,
             CS_GAME
         };
 
@@ -63,9 +64,9 @@ class GameClient : public Singleton<GameClient, SingletonPolicies::WithLongevity
         ~GameClient() override;
 
         void SetInterface(ClientInterface* ci) { this->ci = ci; }
-        bool IsHost() const { return clientconfig.host; }
-        bool IsSavegame() const { return mapinfo.map_type == MAPTYPE_SAVEGAME; }
-        std::string GetGameName() const { return clientconfig.gamename; }
+        bool IsHost() const { return clientconfig.isHost; }
+        bool IsSavegame() const { return mapinfo.type == MAPTYPE_SAVEGAME; }
+        std::string GetGameName() const { return clientconfig.gameName; }
 
         inline unsigned char GetPlayerID() const { return playerId_; }
         inline unsigned GetPlayerCount() const { return players.getCount(); }
@@ -85,13 +86,14 @@ class GameClient : public Singleton<GameClient, SingletonPolicies::WithLongevity
         void Stop();
 
         // Gibt GameWorldViewer zurück (VORLÄUFIG, soll später verschwinden!!)
-        GameWorldViewer* QueryGameWorldViewer() const { return static_cast<GameWorldViewer*>(gw); }
+        GameWorldViewer& QueryGameWorldViewer() const { return *static_cast<GameWorldViewer*>(gw); }
         /// Gibt Map-Titel zurück
         const std::string& GetMapTitle() const { return mapinfo.title; }
         /// Gibt Pfad zu der Map zurück
-        const std::string& GetMapPath() const  { return clientconfig.mapfilepath; }
+        const std::string& GetMapPath() const  { return mapinfo.filepath; }
         /// Gibt Map-Typ zurück
-        const MapType GetMapType() const { return mapinfo.map_type; }
+        const MapType GetMapType() const { return mapinfo.type; }
+        const std::string& GetLuaFilePath() const { return mapinfo.luaFilepath; }
 
         // Initialisiert und startet das Spiel
         void StartGame(const unsigned random_init);
@@ -109,13 +111,12 @@ class GameClient : public Singleton<GameClient, SingletonPolicies::WithLongevity
         unsigned int GetGlobalAnimation(const unsigned short max, const unsigned char factor_numerator, const unsigned char factor_denumerator, const unsigned int offset);
         unsigned int Interpolate(unsigned max_val, EventManager::EventPointer ev);
         int Interpolate(int x1, int x2, EventManager::EventPointer ev);
-        /// Gibt Geschwindigkeits-Faktor zurück
 
         void Command_SetFlag2(const MapPoint pt, unsigned char player);
         void Command_Chat(const std::string& text, const ChatDestination cd );
         void Command_ToggleNation();
         void Command_ToggleTeam(Team newteam);
-        void Command_ToggleColor();
+        void Command_SetColor();
         void Command_ToggleReady();
 
         void IncreaseSpeed();
@@ -141,12 +142,12 @@ class GameClient : public Singleton<GameClient, SingletonPolicies::WithLongevity
         /// Wird ein Replay abgespielt?
         bool IsReplayModeOn() const { return replay_mode; }
 
-        const Replay GetReplay() const { return replayinfo.replay; }
+        Replay& GetReplay() { return replayinfo.replay; }
 
         /// Is tournament mode activated (0 if not)? Returns the durations of the tournament mode in gf otherwise
         unsigned GetTournamentModeDuration() const;
 
-        void SkipGF(unsigned int gf);
+        void SkipGF(unsigned int gf, GameWorldView& gwv);
 
         /// Changes the player ingame (for replay or debugging)
         void ChangePlayerIngame(const unsigned char player1, const unsigned char player2);
@@ -194,42 +195,42 @@ class GameClient : public Singleton<GameClient, SingletonPolicies::WithLongevity
         void StatisticStep();
 
         //  Netzwerknachrichten
-        void OnNMSPing(const GameMessage_Ping& msg) override;
+        void OnGameMessage(const GameMessage_Ping& msg) override;
 
-        void OnNMSServerTypeOK(const GameMessage_Server_TypeOK& msg) override;
-        void OnNMSServerPassword(const GameMessage_Server_Password& msg) override;
-        void OnNMSServerName(const GameMessage_Server_Name& msg) override;
-        void OnNMSServerStart(const GameMessage_Server_Start& msg) override;
-        void OnNMSServerChat(const GameMessage_Server_Chat& msg) override;
-        void OnNMSSystemChat(const GameMessage_System_Chat& msg) override;
-        void OnNMSServerAsync(const GameMessage_Server_Async& msg) override;
-        void OnNMSServerCountdown(const GameMessage_Server_Countdown& msg) override;
-        void OnNMSServerCancelCountdown(const GameMessage_Server_CancelCountdown& msg) override;
+        void OnGameMessage(const GameMessage_Server_TypeOK& msg) override;
+        void OnGameMessage(const GameMessage_Server_Password& msg) override;
+        void OnGameMessage(const GameMessage_Server_Name& msg) override;
+        void OnGameMessage(const GameMessage_Server_Start& msg) override;
+        void OnGameMessage(const GameMessage_Server_Chat& msg) override;
+        void OnGameMessage(const GameMessage_System_Chat& msg) override;
+        void OnGameMessage(const GameMessage_Server_Async& msg) override;
+        void OnGameMessage(const GameMessage_Server_Countdown& msg) override;
+        void OnGameMessage(const GameMessage_Server_CancelCountdown& msg) override;
 
-        void OnNMSPlayerId(const GameMessage_Player_Id& msg) override;
-        void OnNMSPlayerList(const GameMessage_Player_List& msg) override;
-        void OnNMSPlayerToggleState(const GameMessage_Player_Toggle_State& msg) override;
-        void OnNMSPlayerToggleNation(const GameMessage_Player_Toggle_Nation& msg) override;
-        void OnNMSPlayerToggleTeam(const GameMessage_Player_Toggle_Team& msg) override;
-        void OnNMSPlayerToggleColor(const GameMessage_Player_Toggle_Color& msg) override;
-        void OnNMSPlayerKicked(const GameMessage_Player_Kicked& msg) override;
-        void OnNMSPlayerPing(const GameMessage_Player_Ping& msg) override;
-        void OnNMSPlayerNew(const GameMessage_Player_New& msg) override;
-        void OnNMSPlayerReady(const GameMessage_Player_Ready& msg) override;
-        void OnNMSPlayerSwap(const GameMessage_Player_Swap& msg) override;
+        void OnGameMessage(const GameMessage_Player_Id& msg) override;
+        void OnGameMessage(const GameMessage_Player_List& msg) override;
+        void OnGameMessage(const GameMessage_Player_Set_State& msg) override;
+        void OnGameMessage(const GameMessage_Player_Set_Nation& msg) override;
+        void OnGameMessage(const GameMessage_Player_Set_Team& msg) override;
+        void OnGameMessage(const GameMessage_Player_Set_Color& msg) override;
+        void OnGameMessage(const GameMessage_Player_Kicked& msg) override;
+        void OnGameMessage(const GameMessage_Player_Ping& msg) override;
+        void OnGameMessage(const GameMessage_Player_New& msg) override;
+        void OnGameMessage(const GameMessage_Player_Ready& msg) override;
+        void OnGameMessage(const GameMessage_Player_Swap& msg) override;
 
-        void OnNMSMapInfo(const GameMessage_Map_Info& msg) override;
-        void OnNMSMapData(const GameMessage_Map_Data& msg) override;
-        void OnNMSMapChecksumOK(const GameMessage_Map_ChecksumOK& msg) override;
+        void OnGameMessage(const GameMessage_Map_Info& msg) override;
+        void OnGameMessage(const GameMessage_Map_Data& msg) override;
+        void OnGameMessage(const GameMessage_Map_ChecksumOK& msg) override;
 
-        void OnNMSPause(const GameMessage_Pause& msg) override;
-        void OnNMSServerDone(const GameMessage_Server_NWFDone& msg) override;
-        void OnNMSGameCommand(const GameMessage_GameCommand& msg) override;
-        void OnNMSServerSpeed(const GameMessage_Server_Speed& msg) override;
+        void OnGameMessage(const GameMessage_Pause& msg) override;
+        void OnGameMessage(const GameMessage_Server_NWFDone& msg) override;
+        void OnGameMessage(const GameMessage_GameCommand& msg) override;
 
-        void OnNMSGGSChange(const GameMessage_GGSChange& msg) override;
+        void OnGameMessage(const GameMessage_GGSChange& msg) override;
+        void OnGameMessage(const GameMessage_RemoveLua& msg) override;
 
-        void OnNMSGetAsyncLog(const GameMessage_GetAsyncLog& msg) override;
+        void OnGameMessage(const GameMessage_GetAsyncLog& msg) override;
 
         /// Wird aufgerufen, wenn der Server gegangen ist (Verbindung verloren, ungültige Nachricht etc.)
         void ServerLost();
@@ -296,30 +297,14 @@ class GameClient : public Singleton<GameClient, SingletonPolicies::WithLongevity
                 void Clear();
 
                 std::string server;
-                std::string gamename;
+                std::string gameName;
                 std::string password;
-                std::string mapfile;
-                std::string mapfilepath;
                 ServerType servertyp;
                 unsigned short port;
-                bool host;
+                bool isHost;
         } clientconfig;
 
-        class MapInfo
-        {
-            public:
-                MapInfo() { Clear(); }
-                void Clear();
-
-                MapType map_type;
-                unsigned partcount;
-                unsigned ziplength;
-                unsigned length;
-                unsigned checksum;
-                std::string title;
-                boost::shared_array<unsigned char> zipdata;
-                boost::shared_ptr<Savegame> savegame;
-        } mapinfo;
+        MapInfo mapinfo;
 
         FramesInfoClient framesinfo;
 

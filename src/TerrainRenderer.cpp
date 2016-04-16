@@ -26,7 +26,6 @@
 #include "GameClient.h"
 #include "world/MapGeometry.h"
 #include "world/GameWorldView.h"
-#include "world/GameWorldViewer.h"
 #include "gameData/TerrainData.h"
 #include "ExtensionList.h"
 #include "Loader.h"
@@ -677,17 +676,17 @@ void TerrainRenderer::Draw(const GameWorldView& gwv, unsigned int* water)
     Point<int> lastOffset(0, 0);
  
     // Beim zeichnen immer nur beginnen, wo man auch was sieht
-    for(int y = gwv.GetFirstPt().y; y < gwv.GetLastPt().y; ++y)
+    for(int y = gwv.GetFirstPt().y; y <= gwv.GetLastPt().y; ++y)
     {
         unsigned char lastTerrain = 255;
         unsigned char lastBorder  = 255;
 
-        for(int x = gwv.GetFirstPt().x; x < gwv.GetLastPt().x; ++x)
+        for(int x = gwv.GetFirstPt().x; x <= gwv.GetLastPt().x; ++x)
         {
             Point<int> posOffset;
             MapPoint tP = ConvertCoords(Point<int>(x, y), &posOffset);
 
-            TerrainType t = gwv.GetGameWorldViewer().GetNode(tP).t1;
+            TerrainType t = gwv.GetViewer().GetNode(tP).t1;
             if(posOffset != lastOffset)
                 lastTerrain = 255;
 
@@ -700,7 +699,7 @@ void TerrainRenderer::Draw(const GameWorldView& gwv, unsigned int* water)
                 lastTerrain = t;
             }
 
-            t = gwv.GetGameWorldViewer().GetNode(tP).t2;
+            t = gwv.GetViewer().GetNode(tP).t2;
 
             if(t == lastTerrain)
                 ++sorted_textures[t].back().count;
@@ -808,12 +807,10 @@ void TerrainRenderer::Draw(const GameWorldView& gwv, unsigned int* water)
     glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE_EXT);
     glTexEnvf(GL_TEXTURE_ENV, GL_RGB_SCALE_EXT, 2.0f);
 
-    // Verschieben gem#ß x und y offset
-    glTranslatef( float(-gwv.GetXOffset()), float(-gwv.GetYOffset()), 0.0f);
-
     // Alphablending aus
     glDisable(GL_BLEND);
 
+    glPushMatrix();
     for(unsigned char t = 0; t < TT_COUNT; ++t)
     {
         if(sorted_textures[t].empty())
@@ -842,18 +839,17 @@ void TerrainRenderer::Draw(const GameWorldView& gwv, unsigned int* water)
             glDrawArrays(GL_TRIANGLES, it->tileOffset * 3, it->count * 3); // Arguments are in Elements. 1 triangle has 3 values
         }
     }
+    glPopMatrix();
 
     glEnable(GL_BLEND);
 
-    glLoadIdentity();
-    glTranslatef( float(-gwv.GetXOffset()), float(-gwv.GetYOffset()), 0.0f);
-
     lastOffset = PointI(0, 0);
+    glPushMatrix();
     for(unsigned short i = 0; i < 5; ++i)
     {
         if(sorted_borders[i].empty())
             continue;
-        VIDEODRIVER.BindTexture(GetImage(borders, i)->GetTexture());
+        VIDEODRIVER.BindTexture(dynamic_cast<glArchivItem_Bitmap*>(LOADER.borders.get(i))->GetTexture());
 
         for(std::vector<BorderTile>::iterator it = sorted_borders[i].begin(); it != sorted_borders[i].end(); ++it)
         {
@@ -867,7 +863,7 @@ void TerrainRenderer::Draw(const GameWorldView& gwv, unsigned int* water)
             glDrawArrays(GL_TRIANGLES, it->tileOffset * 3, it->count * 3); // Arguments are in Elements. 1 triangle has 3 values
         }
     }
-    glLoadIdentity();
+    glPopMatrix();
 
     DrawWays(sorted_roads);
 
@@ -926,9 +922,9 @@ struct GL_T2F_C3F_V3F_Struct
 
 void TerrainRenderer::PrepareWaysPoint(PreparedRoads& sorted_roads, const GameWorldView& gwv, MapPoint t, const PointI& offset)
 {
-    PointI startPos = PointI(GetNodePos(t)) - gwv.GetOffset() + offset;
+    PointI startPos = PointI(GetNodePos(t)) + offset;
 
-    GameWorldViewer& gwViewer = gwv.GetGameWorldViewer();
+    GameWorldViewer& gwViewer = gwv.GetViewer();
     Visibility visibility = gwViewer.GetVisibility(t);
 
 	int totalWidth  = gwViewer.GetWidth()  * TR_W;
@@ -942,7 +938,7 @@ void TerrainRenderer::PrepareWaysPoint(PreparedRoads& sorted_roads, const GameWo
             continue;
         MapPoint ta = gwViewer.GetNeighbour(t, 3 + dir);
 
-        PointI endPos = PointI(GetNodePos(ta)) - gwv.GetOffset() + offset;
+        PointI endPos = PointI(GetNodePos(ta)) + offset;
         PointI diff = startPos - endPos;
 
         // Gehen wir über einen Kartenrand (horizontale Richung?)
@@ -1085,7 +1081,7 @@ void TerrainRenderer::DrawWays(const PreparedRoads& sorted_roads)
         }
 
         glInterleavedArrays(GL_T2F_C3F_V3F, 0, tmp.get());
-        VIDEODRIVER.BindTexture(GetImage(roads, type)->GetTexture());
+        VIDEODRIVER.BindTexture(dynamic_cast<glArchivItem_Bitmap*>(LOADER.roads.get(type))->GetTexture());
         glDrawArrays(GL_QUADS, 0, i);
     }
 }

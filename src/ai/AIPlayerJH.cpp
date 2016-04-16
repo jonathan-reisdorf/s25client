@@ -141,7 +141,7 @@ void AIPlayerJH::RunGF(const unsigned gf, bool gfisnwf)
 
     if ((gf + 41 + playerid * 17) % attack_interval == 0)
     {
-        if(ggs.getSelection(ADDON_SEA_ATTACK) < 2) //not deactivated by addon? -> go ahead
+        if(ggs.getSelection(AddonId::SEA_ATTACK) < 2) //not deactivated by addon? -> go ahead
             TrySeaAttack();
     }
 
@@ -556,17 +556,19 @@ void AIPlayerJH::InitResourceMaps()
     }
 }
 
-struct MapPoint2Idx
-{
-    typedef unsigned result_type;
-    const AIInterface& aii_;
-
-    MapPoint2Idx(const AIInterface& aii): aii_(aii){}
-    result_type operator()(const MapPoint pt, unsigned  /*r*/)
+namespace{
+    struct MapPoint2Idx
     {
-        return aii_.GetIdx(pt);
-    }
-};
+        typedef unsigned result_type;
+        const AIInterface& aii_;
+
+        MapPoint2Idx(const AIInterface& aii): aii_(aii){}
+        result_type operator()(const MapPoint pt, unsigned  /*r*/)
+        {
+            return aii_.GetIdx(pt);
+        }
+    };
+}
 
 void AIPlayerJH::SetFarmedNodes(const MapPoint pt, bool set)
 {
@@ -676,7 +678,7 @@ PositionSearchState AIPlayerJH::FindGoodPosition(PositionSearch* search, bool be
 
 bool AIPlayerJH::FindBestPositionDiminishingResource(MapPoint& pt, AIJH::Resource res, BuildingQuality size, int minimum, int radius, bool inTerritory)
 {
-    bool fixed = ggs.isEnabled(ADDON_INEXHAUSTIBLE_MINES) && (res == AIJH::IRONORE || res == AIJH::COAL || res == AIJH::GOLD || res == AIJH::GRANITE);
+    bool fixed = ggs.isEnabled(AddonId::INEXHAUSTIBLE_MINES) && (res == AIJH::IRONORE || res == AIJH::COAL || res == AIJH::GOLD || res == AIJH::GRANITE);
     unsigned short width = aii.GetMapWidth();
     unsigned short height = aii.GetMapHeight();
     int temp = 0;
@@ -2531,7 +2533,7 @@ void AIPlayerJH::AdjustSettings()
     milSettings[3] = 5;
 	//interior 0bar full if we have an upgrade building and gold(or produce gold) else 1 soldier each
 	milSettings[4] = UpdateUpgradeBuilding() >= 0 && (inventory.goods[GD_COINS]>0 || (inventory.goods[GD_GOLD]>0 && inventory.goods[GD_COAL]>0 && !aii.GetBuildings(BLD_MINT).empty()) )? 8 : 0;     
-    milSettings[6] = ggs.getSelection(ADDON_SEA_ATTACK)==2 ? 0 : 8; //harbor flag: no sea attacks?->no soldiers else 50% to 100%
+    milSettings[6] = ggs.getSelection(AddonId::SEA_ATTACK)==2 ? 0 : 8; //harbor flag: no sea attacks?->no soldiers else 50% to 100%
 	milSettings[5] = CalcMilSettings(); //inland 1bar min 50% max 100% depending on how many soldiers are available
 	milSettings[7] = 8;                                                     //front: 100%
 	if(player.militarySettings_[5] != milSettings[5] || player.militarySettings_[6] != milSettings[6] || player.militarySettings_[4]!=milSettings[4] || player.militarySettings_[1]!=milSettings[1]) //only send the command if we want to change something
@@ -2572,7 +2574,7 @@ unsigned AIPlayerJH::CalcMilSettings()
 		else if((*it)->GetBuildingType()==BLD_FORTRESS)
 			convtype=3;
 		if((*it)->GetFrontierDistance()==3 ||
-            ((*it)->GetFrontierDistance()==2 && ggs.getSelection(ADDON_SEA_ATTACK)!=2) ||
+            ((*it)->GetFrontierDistance()==2 && ggs.getSelection(AddonId::SEA_ATTACK)!=2) ||
             ((*it)->GetFrontierDistance()==0 && (militaryBuildings.size() < (unsigned)count + numShouldStayConnected || count==uun)))//front or connected interior
 		{
 			soldierInUseFixed+=maxtroops[4][convtype];

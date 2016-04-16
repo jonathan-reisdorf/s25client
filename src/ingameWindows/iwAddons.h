@@ -20,6 +20,8 @@
 #pragma once
 
 #include "IngameWindow.h"
+#include "addons/const_addons.h"
+#include <vector>
 
 class GlobalGameSettings;
 class MouseCoords;
@@ -28,24 +30,23 @@ class iwAddons : public IngameWindow
 {
         /// Breite der Scrollbar
         static const unsigned short SCROLLBAR_WIDTH = 20;
-        /// Pointer to the settings we edit in this window
-        GlobalGameSettings* ggs;
-
     public:
         enum ChangePolicy
         {
             HOSTGAME,
+            /// Allow only whitelisted addons to change
+            HOSTGAME_WHITELIST,
             READONLY,
             SETDEFAULTS
         };
 
     public:
-        iwAddons(GlobalGameSettings* ggs, ChangePolicy policy = SETDEFAULTS);
+        iwAddons(GlobalGameSettings& ggs, ChangePolicy policy = SETDEFAULTS, const std::vector<AddonId>& addonIds = std::vector<AddonId>());
         ~iwAddons() override;
 
     protected:
         void Msg_ButtonClick(const unsigned int ctrl_id) override;
-        void Msg_OptionGroupChange(const unsigned int ctrl_id, const unsigned short selection) override;
+        void Msg_OptionGroupChange(const unsigned int ctrl_id, const int selection) override;
         void Msg_ScrollChange(const unsigned int ctrl_id, const unsigned short position) override;
         bool Msg_WheelUp(const MouseCoords& mc) override;
         bool Msg_WheelDown(const MouseCoords& mc) override;
@@ -54,8 +55,11 @@ class iwAddons : public IngameWindow
         void UpdateView(const unsigned short selection);
 
     private:
+        /// settings we edit in this window
+        GlobalGameSettings& ggs;
         ChangePolicy policy;
-        unsigned short _inthiscategory;
+        std::vector<AddonId> addonIds;
+        unsigned short numAddonsInCurCategory_;
 };
 
 #endif // !iwENHANCEMENTS_H_INCLUDED

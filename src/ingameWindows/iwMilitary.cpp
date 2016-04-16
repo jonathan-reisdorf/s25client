@@ -27,12 +27,6 @@
 // Include last!
 #include "DebugNew.h" // IWYU pragma: keep
 
-///////////////////////////////////////////////////////////////////////////////
-/**
- *  Konstruktor von @p iwMilitary.
- *
- *  @author OLiver
- */
 iwMilitary::iwMilitary()
     : IngameWindow(CGI_MILITARY, 0xFFFE, 0xFFFE, 168, 330, _("Military"), LOADER.GetImageN("io", 5)),
       settings_changed(false)
@@ -53,7 +47,7 @@ iwMilitary::iwMilitary()
     AddImageButton(21, 120, 282, 30, 32, TC_GREY, LOADER.GetImageN("io", 191), _("Default"));
 
     // Falls Verteidiger ändern verboten ist, einfach die Bar ausblenden
-    if (GAMECLIENT.GetGGS().getSelection(ADDON_DEFENDER_BEHAVIOR) == 1)
+    if (GAMECLIENT.GetGGS().getSelection(AddonId::DEFENDER_BEHAVIOR) == 1)
     {
         GetCtrl<ctrlProgress>(2)->SetVisible(false);
     }

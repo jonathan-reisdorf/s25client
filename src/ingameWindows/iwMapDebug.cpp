@@ -21,6 +21,7 @@
 #include "controls/ctrlCheck.h"
 #include "Loader.h"
 #include "ogl/glArchivItem_Font.h"
+#include "world/GameWorldView.h"
 #include "world/GameWorldViewer.h"
 #include "gameTypes/TextureColor.h"
 #include "gameData/const_gui_ids.h"
@@ -74,11 +75,11 @@ public:
     glArchivItem_Font* font;
 };
 
-iwMapDebug::iwMapDebug(GameWorldViewer& gwv):
+iwMapDebug::iwMapDebug(GameWorldView& gwv):
     IngameWindow(CGI_MAP_DEBUG, 0xFFFF, 0xFFFF, 300, 200, _("Map Debug"), LOADER.GetImageN("resource", 41)),
-    gwv(gwv), printer(new DebugPrinter(gwv))
+    gwv(gwv), printer(new DebugPrinter(gwv.GetViewer()))
 {
-    gwv.GetView()->SetDebugNodePrinter(printer);
+    gwv.SetDebugNodePrinter(printer);
 
     ctrlCheck* cbShowCoords = AddCheckBox(0, 15, 30, 250, 20, TC_GREY, _("Show coordinates"), NormalFont);
     cbShowCoords->SetCheck(true);
@@ -96,15 +97,16 @@ iwMapDebug::iwMapDebug(GameWorldViewer& gwv):
 
 iwMapDebug::~iwMapDebug()
 {
-    gwv.GetView()->SetDebugNodePrinter(NULL);
+    gwv.SetDebugNodePrinter(NULL);
     delete printer;
 }
 
-void iwMapDebug::Msg_ComboSelectItem(const unsigned int ctrl_id, const unsigned short select)
+void iwMapDebug::Msg_ComboSelectItem(const unsigned int ctrl_id, const int select)
 {
     if(ctrl_id != 1)
         return;
-    printer->showDataIdx = select;
+    if(select >= 0)
+        printer->showDataIdx = static_cast<unsigned>(select);
 }
 
 void iwMapDebug::Msg_CheckboxChange(const unsigned int ctrl_id, const bool checked)

@@ -20,7 +20,7 @@
 #pragma once
 
 #include "Addons.h"
-#include "../mygettext/src/mygettext.h"
+#include "mygettext/src/mygettext.h"
 
 ///////////////////////////////////////////////////////////////////////////////
 /**
@@ -33,10 +33,10 @@
 class AddonMilitaryAid : public AddonBool
 {
     public:
-        AddonMilitaryAid() : AddonBool(ADDON_MILITARY_AID,
+        AddonMilitaryAid() : AddonBool(AddonId::MILITARY_AID,
                                            ADDONGROUP_GAMEPLAY | ADDONGROUP_MILITARY,
-                                           gettext_noop("Military Aid"),
-                                           gettext_noop("Adds military building indicators in construction aid mode."),
+                                           _("Military Aid"),
+                                           _("Adds military building indicators in construction aid mode."),
                                            0
                                           )
         {

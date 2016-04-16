@@ -21,21 +21,21 @@
 #include "IngameWindow.h"
 
 class ctrlText;
-class GameWorldViewer;
+class GameWorldView;
 
 class iwMapDebug: public IngameWindow
 {
 public:
-    iwMapDebug(GameWorldViewer& gwv);
+    iwMapDebug(GameWorldView& gwv);
     ~iwMapDebug() override;
 
 private:
     class DebugPrinter;
 
-    void Msg_ComboSelectItem(const unsigned int ctrl_id, const unsigned short select) override;
+    void Msg_ComboSelectItem(const unsigned int ctrl_id, const int selection) override;
     void Msg_CheckboxChange(const unsigned int ctrl_id, const bool checked) override;
 
-    GameWorldViewer& gwv;
+    GameWorldView& gwv;
     DebugPrinter* printer;
 };
 

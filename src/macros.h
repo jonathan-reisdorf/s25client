@@ -34,7 +34,6 @@
 
 #if defined _WIN32 && defined _MSC_VER
 #   define GetBobFile(file) ( dynamic_cast<glArchivItem_Bob*>(LOADER.##file##.get(0) ) )
-#   define GetImage(type, nr) ( dynamic_cast<glArchivItem_Bitmap*>( LOADER.##type##.get(nr) ) )
 #   define GetFont(type, nr)  ( dynamic_cast<glArchivItem_Font*>( LOADER.##type##.get(nr) ) )
 #   define GetSound(type, nr) ( dynamic_cast<glArchivItem_Sound*>( LOADER.##type##.get(nr) ) )
 #   define GetMusic(type, nr) ( dynamic_cast<glArchivItem_Music*>( LOADER.##type##.get(nr) ) )
@@ -47,13 +46,18 @@
 #   endif
 #else
 #   define GetBobFile(file) ( dynamic_cast<glArchivItem_Bob*>(LOADER.file.get(0) ) )
-#   define GetImage(type, nr) ( dynamic_cast<glArchivItem_Bitmap*>( LOADER.type.get(nr) ) )
 #   define GetFont(type, nr)  ( dynamic_cast<glArchivItem_Font*>( LOADER.type.get(nr) ) )
 #   define GetTxt(type, nr)   ( dynamic_cast<const libsiedler2::ArchivItem_Text*>( LOADER.type.get(nr) )->getText() )
 #   define GetSound(type, nr) ( dynamic_cast<glArchivItem_Sound*>( LOADER.type.get(nr) ) )
 #   define GetMusic(type, nr) ( dynamic_cast<glArchivItem_Music*>( LOADER.type.get(nr) ) )
 #   define GetTxtItem(type, nr) ( dynamic_cast<libsiedler2::ArchivItem_Text*>( LOADER.type.get(nr) ) )
 #endif // !_WIN32 || !_MSC_VER
+
+#ifdef _MSC_VER
+#   define FORCE_INLINE __forceinline
+#else
+#   define FORCE_INLINE inline __attribute__((__always_inline__))
+#endif // _MSC_VER
 
 // Macro that can be used to suppress unused warnings. Required e.g. for const boost::arrays defined in headers
 // Don't use this if not absolutely necessary!

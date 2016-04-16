@@ -23,14 +23,8 @@
 // Include last!
 #include "DebugNew.h" // IWYU pragma: keep
 
-///////////////////////////////////////////////////////////////////////////////
-/**
- *  Konstruktor von @p GlobalVars.
- *
- *  @author FloSoft
- */
 GlobalVars::GlobalVars()
-    : notdone(true), ingame(false),
-      ext_vbo(false), ext_swapcontrol(false)
+    : notdone(true),
+      ext_vbo(false), ext_swapcontrol(false), isTest(false), errorOccured(false)
 {
 }

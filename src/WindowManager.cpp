@@ -37,24 +37,12 @@
 // Include last!
 #include "DebugNew.h" // IWYU pragma: keep
 
-///////////////////////////////////////////////////////////////////////////////
-/**
- *  Konstruktor von @p WindowManager.
- *
- *  @author OLiver
- */
 WindowManager::WindowManager()
     : disable_mouse(false),
       mouseCoords(NULL), screenWidth(0), screenHeight(0), last_left_click_time(0), last_left_click_point(0, 0)
 {
 }
 
-///////////////////////////////////////////////////////////////////////////////
-/**
- *  Destruktor von @p WindowManager.
- *
- *  @author OLiver
- */
 WindowManager::~WindowManager()
 {
     CleanUp();
@@ -226,6 +214,7 @@ void WindowManager::RelayMouseMessage(bool (Window::*msg)(const MouseCoords&), c
  */
 void WindowManager::Show(IngameWindow* window, bool mouse)
 {
+    RTTR_Assert(window);
     SetToolTip(NULL, "");
 
     // haben wir ein gültiges Fenster erhalten?
@@ -270,6 +259,13 @@ void WindowManager::Show(IngameWindow* window, bool mouse)
 
     // Maus deaktivieren, bis sie losgelassen wurde (Fix des Switch-Anschließend-Drück-Bugs)
     disable_mouse = mouse;
+}
+
+void WindowManager::ShowAfterSwitch(IngameWindow* window)
+{
+    RTTR_Assert(window);
+    RTTR_Assert(nextdesktop); // Only usefull if we are about to switch, otherwise use regular Show function
+    nextWnds.push_back(window);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -342,8 +338,11 @@ void WindowManager::Msg_LeftDown(MouseCoords mc)
 
     // ist das zuletzt aktiv gewesene Fenster Modal?
     IngameWindow& lastActiveWnd = *windows.back();
-    if( lastActiveWnd.GetModal())
+    if(lastActiveWnd.GetModal())
     {
+        if(!lastActiveWnd.GetActive())
+            lastActiveWnd.SetActive();
+
         // ja es ist modal, ist der Maus-Klick-Fix aktiv?
         if(!disable_mouse)
         {
@@ -857,7 +856,7 @@ void WindowManager::Close(IngameWindow* window)
         return;
 
     IgwListIterator it = std::find(windows.begin(), windows.end(), window);
-    if( it == windows.end())
+    if(it == windows.end())
         return; // Window already closed -> Out
 
     SetToolTip(NULL, "");
@@ -915,6 +914,7 @@ void WindowManager::Close(unsigned int id)
  */
 void WindowManager::Switch()
 {
+    RTTR_Assert(nextdesktop);
     // einmal richtig clearen
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -931,15 +931,14 @@ void WindowManager::Switch()
 
     // Desktop auf Neuen umstellen
     curDesktop.reset(nextdesktop.release());
+    curDesktop->SetActive(true);
 
-    // ist der neue Desktop gültig?
-    if(curDesktop)
-    {
-        // Desktop aktivieren
-        curDesktop->SetActive(true);
-        // Dummy mouse move to init hovering etc
-        Msg_MouseMove(MouseCoords(VIDEODRIVER.GetMouseX(), VIDEODRIVER.GetMouseY(), false, false, false));
-    }
+    for(std::vector<IngameWindow*>::iterator it = nextWnds.begin(); it != nextWnds.end(); ++it)
+        Show(*it);
+    nextWnds.clear();
+
+    // Dummy mouse move to init hovering etc
+    Msg_MouseMove(MouseCoords(VIDEODRIVER.GetMouseX(), VIDEODRIVER.GetMouseY(), false, false, false));
 }
 
 void WindowManager::SetToolTip(const Window* ttw, const std::string& tooltip)

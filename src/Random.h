@@ -37,6 +37,8 @@ struct RandomEntry
     unsigned src_line;
     unsigned obj_id;
 
+    inline unsigned GetValue() const;
+
     RandomEntry(unsigned counter, int max, int rngState, const std::string& src_name, unsigned int src_line, unsigned obj_id) : counter(counter), max(max), rngState(rngState), src_name(src_name), src_line(src_line), obj_id(obj_id) {};
     RandomEntry() : counter(0), max(0), rngState(0), src_line(0), obj_id(0) {};
 };
@@ -48,7 +50,6 @@ class Random : public Singleton<Random>
 
     public:
 
-        /// Konstruktor von @p Random.
         Random();
         /// Initialisiert den Zufallszahlengenerator.
         void Init(const unsigned int init);
@@ -82,12 +83,16 @@ class Random : public Singleton<Random>
 
         static int GetValueFromState(const int rngState, const int maxVal);
     private:
-        int rngState_; ///< Die aktuelle Zufallszahl.
+        int rngState_; /// Die aktuelle Zufallszahl.
         static inline int GetNextState(const int rngState, const int maxVal);
 };
 
 ///////////////////////////////////////////////////////////////////////////////
 // Makros / Defines
 #define RANDOM Random::inst()
+
+unsigned RandomEntry::GetValue() const {
+    return Random::GetValueFromState(rngState, max);
+}
 
 #endif // !RANDOM_H_INCLUDED

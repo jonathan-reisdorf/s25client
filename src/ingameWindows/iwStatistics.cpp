@@ -32,12 +32,6 @@
 // Include last!
 #include "DebugNew.h" // IWYU pragma: keep
 
-///////////////////////////////////////////////////////////////////////////////
-/**
- *  Konstruktor von @p iwStatistics.
- *
- *  @author jh
- */
 iwStatistics::iwStatistics()
     : IngameWindow(CGI_STATISTICS, 0xFFFE, 0xFFFE, 252, 336, _("Statistics"), LOADER.GetImageN("resource", 41))
 {
@@ -47,8 +41,7 @@ iwStatistics::iwStatistics()
     numPlayingPlayers = 0;
     for (unsigned i = 0; i < GAMECLIENT.GetPlayerCount(); ++i)
     {
-        PlayerState plState = GAMECLIENT.GetPlayer(i).ps;
-        if (plState == PS_KI || plState == PS_OCCUPIED)
+        if (GAMECLIENT.GetPlayer(i).isUsed())
             numPlayingPlayers++;
     }
 
@@ -59,7 +52,7 @@ iwStatistics::iwStatistics()
     for (unsigned i = 0; i < GAMECLIENT.GetPlayerCount(); ++i)
     {
         // nicht belegte Spielplätze rauswerfen
-        if (!(GAMECLIENT.GetPlayer(i).ps == PS_KI || GAMECLIENT.GetPlayer(i).ps == PS_OCCUPIED))
+        if (!GAMECLIENT.GetPlayer(i).isUsed())
         {
             activePlayers[i] = false;
             continue;
@@ -82,7 +75,7 @@ iwStatistics::iwStatistics()
         }
 
         // Statistik-Sichtbarkeit abhängig von Auswahl
-        switch (GAMECLIENT.IsReplayModeOn() ? 0 : GAMECLIENT.GetGGS().getSelection(ADDON_STATISTICS_VISIBILITY))
+        switch (GAMECLIENT.IsReplayModeOn() ? 0 : GAMECLIENT.GetGGS().getSelection(AddonId::STATISTICS_VISIBILITY))
         {
             default: // Passiert eh nicht, nur zur Sicherheit
                 activePlayers[i] = false;
@@ -162,23 +155,11 @@ iwStatistics::iwStatistics()
         minValue->SetVisible(false);
 }
 
-///////////////////////////////////////////////////////////////////////////////
-/**
- *
- *
- *  @author jh
- */
 iwStatistics::~iwStatistics()
 {
 
 }
 
-///////////////////////////////////////////////////////////////////////////////
-/**
- *
- *
- *  @author jh
- */
 void iwStatistics::Msg_ButtonClick(const unsigned int ctrl_id)
 {
     switch (ctrl_id)
@@ -193,13 +174,7 @@ void iwStatistics::Msg_ButtonClick(const unsigned int ctrl_id)
     }
 }
 
-///////////////////////////////////////////////////////////////////////////////
-/**
- *
- *
- *  @author jh
- */
-void iwStatistics::Msg_OptionGroupChange(const unsigned int ctrl_id, const unsigned short selection)
+void iwStatistics::Msg_OptionGroupChange(const unsigned int ctrl_id, const int selection)
 {
     switch(ctrl_id)
     {
@@ -260,12 +235,6 @@ void iwStatistics::Msg_OptionGroupChange(const unsigned int ctrl_id, const unsig
     }
 }
 
-///////////////////////////////////////////////////////////////////////////////
-/**
- *
- *
- *  @author jh
- */
 void iwStatistics::Msg_PaintAfter()
 {
     // Die farbigen Boxen unter den Spielerportraits malen
@@ -274,13 +243,12 @@ void iwStatistics::Msg_PaintAfter()
     for (unsigned i = 0; i < GAMECLIENT.GetPlayerCount(); ++i)
     {
         GameClientPlayer& player = GAMECLIENT.GetPlayer(i);
-        if (!(player.ps == PS_KI || player.ps == PS_OCCUPIED))
-        {
+        if (!player.isUsed())
             continue;
-        }
+
         if (activePlayers[i])
         {
-            DrawRectangle(this->x_ + startX + pos * 34, this->y_ + 68, 34, 12, COLORS[player.color]);
+            DrawRectangle(this->x_ + startX + pos * 34, this->y_ + 68, 34, 12, player.color);
         }
         pos++;
     }
@@ -292,12 +260,6 @@ void iwStatistics::Msg_PaintAfter()
     DrawStatistic(currentView);
 }
 
-///////////////////////////////////////////////////////////////////////////////
-/**
- *
- *
- *  @author jh
- */
 void iwStatistics::DrawStatistic(StatisticType type)
 {
     // Ein paar benötigte Werte...
@@ -368,13 +330,13 @@ void iwStatistics::DrawStatistic(StatisticType type)
                 {
                     DrawLine(topLeftX + (STAT_STEP_COUNT - i) * stepX,
                              topLeftY + sizeY - ((stat.data[type][(currentIndex >= i) ? (currentIndex - i) : (STAT_STEP_COUNT - i + currentIndex)] - min)*sizeY) / (max - min),
-                             previousX, previousY, 2, COLORS[GAMECLIENT.GetPlayer(p).color]);
+                             previousX, previousY, 2, GAMECLIENT.GetPlayer(p).color);
                 }
                 else
                 {
                     DrawLine(topLeftX + (STAT_STEP_COUNT - i) * stepX,
                              topLeftY + sizeY - ((stat.data[type][(currentIndex >= i) ? (currentIndex - i) : (STAT_STEP_COUNT - i + currentIndex)])*sizeY) / max,
-                             previousX, previousY, 2, COLORS[GAMECLIENT.GetPlayer(p).color]);
+                             previousX, previousY, 2, GAMECLIENT.GetPlayer(p).color);
                 }
             }
             previousX = topLeftX + (STAT_STEP_COUNT - i) * stepX;
@@ -390,12 +352,6 @@ void iwStatistics::DrawStatistic(StatisticType type)
     }
 }
 
-///////////////////////////////////////////////////////////////////////////////
-/**
- *
- *
- *  @author jh
- */
 void iwStatistics::DrawAxis()
 {
     // Ein paar benötigte Werte...

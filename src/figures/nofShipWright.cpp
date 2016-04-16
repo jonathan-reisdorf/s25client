@@ -49,16 +49,18 @@ struct ShipPoint
     ShipPoint(MapPoint pos, unsigned char firstDir): pos(pos), first_dir(firstDir){}
 };
 
-struct IsNotReserved
-{
-    const World& world;
-    IsNotReserved(const World& world): world(world){}
-
-    bool operator()(const MapPoint& pt) const
+namespace{
+    struct IsNotReserved
     {
-        return !world.GetNode(pt).reserved;
-    }
-};
+        const World& world;
+        IsNotReserved(const World& world): world(world){}
+
+        bool operator()(const MapPoint& pt) const
+        {
+            return !world.GetNode(pt).reserved;
+        }
+    };
+}
 
 void nofShipWright::HandleDerivedEvent(const unsigned int  /*id*/)
 {
@@ -354,7 +356,7 @@ void nofShipWright::DrawWorking(int x, int y)
         {
             unsigned id = GAMECLIENT.Interpolate(42, current_ev);
             unsigned graphics_id = ANIMATION[id];
-            LOADER.GetPlayerImage("rom_bobs", graphics_id)->Draw(x, y, 0, 0, 0, 0, 0, 0, COLOR_WHITE, COLORS[gwg->GetPlayer(player).color]);
+            LOADER.GetPlayerImage("rom_bobs", graphics_id)->Draw(x, y, 0, 0, 0, 0, 0, 0, COLOR_WHITE, gwg->GetPlayer(player).color);
 
             // Steh-Hammer-Sound
             if(graphics_id == 300)

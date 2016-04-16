@@ -30,14 +30,8 @@
 // Include last!
 #include "DebugNew.h" // IWYU pragma: keep
 
-///////////////////////////////////////////////////////////////////////////////
-/**
- *  Konstruktor von @p Window.
- *
- *  @author OLiver
- */
 Window::Window()
-    : x_(0), y_(0), width_(0), height_(0), id_(0), parent_(NULL), active_(false), visible_(true), scale_(false), tooltip_("")
+    : x_(0), y_(0), width_(0), height_(0), id_(0), parent_(NULL), active_(false), visible_(true), scale_(false), tooltip_(""), isInMouseRelay(false)
 {
 }
 
@@ -59,18 +53,13 @@ Window::Window(unsigned short x,
                unsigned short width,
                unsigned short height,
                const std::string& tooltip)
-    : x_(x), y_(y), width_(width), height_(height), id_(id), parent_(parent), active_(false), visible_(true), scale_(false), tooltip_(tooltip)
+    : x_(x), y_(y), width_(width), height_(height), id_(id), parent_(parent), active_(false), visible_(true), scale_(false), tooltip_(tooltip), isInMouseRelay(false)
 {
 }
 
-///////////////////////////////////////////////////////////////////////////////
-/**
- *  virtueller Destruktor von @p Window.
- *
- *  @author OLiver
- */
 Window::~Window()
 {
+    RTTR_Assert(!isInMouseRelay);
     // Steuerelemente aufräumen
     for(std::map<unsigned int, Window*>::iterator it = childIdToWnd_.begin(); it != childIdToWnd_.end(); ++it)
         delete it->second;
@@ -186,9 +175,9 @@ bool Window::RelayMouseMessage(bool (Window::*msg)(const MouseCoords&), const Mo
         return false;
 
     bool processed = false;
+    isInMouseRelay = true;
 
     // Alle Controls durchgehen
-    // Falls das Fenster dann plötzlich nich mehr aktiv ist (z.b. neues Fenster geöffnet, sofort abbrechen!)
     // Use reverse iterator because the topmost (=last elements) should receive the messages first!
     for(std::map<unsigned int, Window*>::reverse_iterator it = childIdToWnd_.rbegin(); it != childIdToWnd_.rend() && active_; ++it)
     {
@@ -197,29 +186,16 @@ bool Window::RelayMouseMessage(bool (Window::*msg)(const MouseCoords&), const Mo
                 continue;
 
         if(it->second->visible_ && it->second->active_)
-            // Falls von einem Steuerelement verarbeitet --> abbrechen
+        {
             if((it->second->*msg)(mc))
-            {
                 processed = true;
-                break;
-            }
+        }
     }
 
-    /*// Nur vorläufig
-    if(processed && msg == &Window::Msg_LeftDown)
-    {
-        for(std::map<unsigned int,Window*>::iterator it = idmap.begin(); it != idmap.end() && active; ++it)
-        {
-            if(!locked_areas.empty())
-                if(TestWindowInRegion(it->second, mc))
-                    continue;
-
-            if(it->second->visible && it->second->active)
-                // Falls von einem Steuerelement verarbeitet --> abbrechen
-                it->second->Msg_LeftDown_After(mc);
-
-        }
-    }*/
+    for(std::vector<Window*>::iterator it = tofreeAreas_.begin(); it != tofreeAreas_.end(); ++it)
+        lockedAreas_.erase(*it);
+    tofreeAreas_.clear();
+    isInMouseRelay = false;
 
     return processed;
 }
@@ -264,6 +240,9 @@ void Window::ActivateControls(bool activate)
 void Window::LockRegion(Window* window, const Rect& rect)
 {
     lockedAreas_[window] = rect;
+    std::vector<Window*>::iterator it = std::find(tofreeAreas_.begin(), tofreeAreas_.end(), window);
+    if(it != tofreeAreas_.end())
+        tofreeAreas_.erase(it);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -276,7 +255,11 @@ void Window::LockRegion(Window* window, const Rect& rect)
  */
 void Window::FreeRegion(Window* window)
 {
-    lockedAreas_.erase(window);
+    // We need to keep all locked areas otherwise a closed dropdown will enable "click-through" to below control
+    if(isInMouseRelay)
+        tofreeAreas_.push_back(window);
+    else
+        lockedAreas_.erase(window);
 }
 
 /// Weiterleitung von Nachrichten von abgeleiteten Klassen erlaubt oder nicht?
@@ -1184,437 +1167,4 @@ unsigned short Window::ScaleX(unsigned short val) const
 unsigned short Window::ScaleY(unsigned short val) const
 {
     return val * VIDEODRIVER.GetScreenHeight() / 600;
-}
-
-
-///////////////////////////////////////////////////////////////////////////////
-/**
- *
- *
- *  @author OLiver
- */
-void Window::Msg_PaintBefore()
-{
-}
-
-///////////////////////////////////////////////////////////////////////////////
-/**
- *
- *
- *  @author OLiver
- */
-void Window::Msg_PaintAfter()
-{
-}
-
-///////////////////////////////////////////////////////////////////////////////
-/**
- *
- *
- *  @author OLiver
- */
-bool Window::Msg_LeftDown(const MouseCoords&  /*mc*/)
-{
-    return false;
-}
-
-///////////////////////////////////////////////////////////////////////////////
-/**
- *
- *
- *  @author OLiver
- */
-bool Window::Msg_RightDown(const MouseCoords&  /*mc*/)
-{
-    return false;
-}
-
-///////////////////////////////////////////////////////////////////////////////
-/**
- *
- *
- *  @author OLiver
- */
-bool Window::Msg_LeftUp(const MouseCoords&  /*mc*/)
-{
-    return false;
-}
-
-bool Window::Msg_LeftDown_After(const MouseCoords&  /*mc*/)
-{
-    return false;
-}
-
-///////////////////////////////////////////////////////////////////////////////
-/**
- *
- *
- *  @author OLiver
- */
-bool Window::Msg_RightUp(const MouseCoords&  /*mc*/)
-{
-    return false;
-}
-
-///////////////////////////////////////////////////////////////////////////////
-/**
- *
- *
- *  @author Divan
- */
-bool Window::Msg_WheelUp(const MouseCoords&  /*mc*/)
-{
-    return false;
-}
-
-///////////////////////////////////////////////////////////////////////////////
-/**
- *
- *
- *  @author Divan
- */
-bool Window::Msg_WheelDown(const MouseCoords&  /*mc*/)
-{
-    return false;
-}
-
-///////////////////////////////////////////////////////////////////////////////
-/**
- *
- *
- *  @author OLiver
- */
-bool Window::Msg_MouseMove(const MouseCoords&  /*mc*/)
-{
-    return false;
-}
-
-///////////////////////////////////////////////////////////////////////////////
-/**
- *
- *
- *  @author OLiver
- */
-bool Window::Msg_KeyDown(const KeyEvent&  /*ke*/)
-{
-    return false;
-}
-
-///////////////////////////////////////////////////////////////////////////////
-/**
- *
- *
- *  @author OLiver
- */
-void Window::Msg_ButtonClick(const unsigned int  /*ctrl_id*/)
-{
-}
-
-///////////////////////////////////////////////////////////////////////////////
-/**
- *
- *
- *  @author Divan
- */
-void Window::Msg_ScreenResize(const ScreenResizeEvent&  /*sr*/)
-{
-}
-
-
-///////////////////////////////////////////////////////////////////////////////
-/**
- *
- *
- *  @author OLiver
- */
-void Window::Msg_EditEnter(const unsigned int  /*ctrl_id*/)
-{
-}
-
-///////////////////////////////////////////////////////////////////////////////
-/**
- *
- *
- *  @author OLiver
- */
-void Window::Msg_EditChange(const unsigned int  /*ctrl_id*/)
-{
-}
-
-///////////////////////////////////////////////////////////////////////////////
-/**
- *
- *
- *  @author OLiver
- */
-void Window::Msg_TabChange(const unsigned int  /*ctrl_id*/, const unsigned short  /*tab_id*/)
-{
-}
-
-///////////////////////////////////////////////////////////////////////////////
-/**
- *
- *
- *  @author OLiver
- */
-void Window::Msg_ListSelectItem(const unsigned int  /*ctrl_id*/, const unsigned short  /*selection*/)
-{
-}
-
-void Window::Msg_ListChooseItem(const unsigned int  /*ctrl_id*/, const unsigned short  /*selection*/)
-{
-}
-
-///////////////////////////////////////////////////////////////////////////////
-/**
- *
- *
- *  @author OLiver
- */
-void Window::Msg_ComboSelectItem(const unsigned int  /*ctrl_id*/, const unsigned short  /*selection*/)
-{
-}
-
-///////////////////////////////////////////////////////////////////////////////
-/**
- *
- *
- *  @author OLiver
- */
-void Window::Msg_CheckboxChange(const unsigned int  /*ctrl_id*/, const bool  /*checked*/)
-{
-}
-
-///////////////////////////////////////////////////////////////////////////////
-/**
- *
- *
- *  @author OLiver
- */
-void Window::Msg_ProgressChange(const unsigned int  /*ctrl_id*/, const unsigned short  /*position*/)
-{
-}
-
-///////////////////////////////////////////////////////////////////////////////
-/**
- *
- *
- *  @author FloSoft
- */
-void Window::Msg_ScrollChange(const unsigned int  /*ctrl_id*/, const unsigned short  /*position*/)
-{
-}
-
-///////////////////////////////////////////////////////////////////////////////
-/**
- *
- *
- *  @author OLiver
- */
-void Window::Msg_ScrollShow(const unsigned int  /*ctrl_id*/, const bool  /*visible*/)
-{
-}
-
-///////////////////////////////////////////////////////////////////////////////
-/**
- *
- *
- *  @author OLiver
- */
-void Window::Msg_OptionGroupChange(const unsigned int  /*ctrl_id*/, const unsigned short  /*selection*/)
-{
-}
-
-///////////////////////////////////////////////////////////////////////////////
-/**
- *
- *
- *  @author OLiver
- */
-void Window::Msg_Timer(const unsigned int  /*ctrl_id*/)
-{
-}
-
-///////////////////////////////////////////////////////////////////////////////
-/**
- *
- *
- *  @author OLiver
- */
-void Window::Msg_TableSelectItem(const unsigned int  /*ctrl_id*/, const unsigned short  /*selection*/)
-{
-}
-
-void Window::Msg_TableChooseItem(const unsigned  /*ctrl_id*/, const unsigned short  /*selection*/)
-{
-}
-
-///////////////////////////////////////////////////////////////////////////////
-/**
- *
- *
- *  @author OLiver
- */
-void Window::Msg_TableRightButton(const unsigned int  /*ctrl_id*/, const unsigned short  /*selection*/)
-{
-}
-
-///////////////////////////////////////////////////////////////////////////////
-/**
- *
- *
- *  @author OLiver
- */
-void Window::Msg_TableLeftButton(const unsigned int  /*ctrl_id*/, const unsigned short  /*selection*/)
-{
-}
-
-///////////////////////////////////////////////////////////////////////////////
-/**
- *
- *
- *  @author OLiver
- */
-void Window::Msg_MsgBoxResult(const unsigned  /*msgbox_id*/, const MsgboxResult  /*mbr*/)
-{
-}
-
-///////////////////////////////////////////////////////////////////////////////
-/**
- *
- *
- *  @author OLiver
- */
-void Window::Msg_Group_ButtonClick(const unsigned int  /*group_id*/, const unsigned int  /*ctrl_id*/)
-{
-}
-
-///////////////////////////////////////////////////////////////////////////////
-/**
- *
- *
- *  @author OLiver
- */
-void Window::Msg_Group_EditEnter(const unsigned int  /*group_id*/, const unsigned int  /*ctrl_id*/)
-{
-}
-
-///////////////////////////////////////////////////////////////////////////////
-/**
- *
- *
- *  @author OLiver
- */
-void Window::Msg_Group_EditChange(const unsigned int  /*group_id*/, const unsigned int  /*ctrl_id*/)
-{
-}
-
-///////////////////////////////////////////////////////////////////////////////
-/**
- *
- *
- *  @author OLiver
- */
-void Window::Msg_Group_TabChange(const unsigned int  /*group_id*/, const unsigned int  /*ctrl_id*/, const unsigned short  /*tab_id*/)
-{
-}
-
-///////////////////////////////////////////////////////////////////////////////
-/**
- *
- *
- *  @author OLiver
- */
-void Window::Msg_Group_ListSelectItem(const unsigned int  /*group_id*/, const unsigned int  /*ctrl_id*/, const unsigned short  /*selection*/)
-{
-}
-
-///////////////////////////////////////////////////////////////////////////////
-/**
- *
- *
- *  @author OLiver
- */
-void Window::Msg_Group_ComboSelectItem(const unsigned int  /*group_id*/, const unsigned int  /*ctrl_id*/, const unsigned short  /*selection*/)
-{
-}
-
-///////////////////////////////////////////////////////////////////////////////
-/**
- *
- *
- *  @author OLiver
- */
-void Window::Msg_Group_CheckboxChange(const unsigned int  /*group_id*/, const unsigned int  /*ctrl_id*/, const bool  /*checked*/)
-{
-}
-
-///////////////////////////////////////////////////////////////////////////////
-/**
- *
- *
- *  @author OLiver
- */
-void Window::Msg_Group_ProgressChange(const unsigned int  /*group_id*/, const unsigned int  /*ctrl_id*/, const unsigned short  /*position*/)
-{
-}
-
-///////////////////////////////////////////////////////////////////////////////
-/**
- *
- *
- *  @author OLiver
- */
-void Window::Msg_Group_ScrollShow(const unsigned int  /*group_id*/, const unsigned int  /*ctrl_id*/, const bool  /*visible*/)
-{
-}
-
-///////////////////////////////////////////////////////////////////////////////
-/**
- *
- *
- *  @author OLiver
- */
-void Window::Msg_Group_OptionGroupChange(const unsigned int  /*group_id*/, const unsigned int  /*ctrl_id*/, const unsigned short  /*selection*/)
-{
-}
-
-///////////////////////////////////////////////////////////////////////////////
-/**
- *
- *
- *  @author OLiver
- */
-void Window::Msg_Group_Timer(const unsigned int  /*group_id*/, const unsigned int  /*ctrl_id*/)
-{
-}
-
-///////////////////////////////////////////////////////////////////////////////
-/**
- *
- *
- *  @author OLiver
- */
-void Window::Msg_Group_TableSelectItem(const unsigned int  /*group_id*/, const unsigned int  /*ctrl_id*/, const unsigned short  /*selection*/)
-{
-}
-
-///////////////////////////////////////////////////////////////////////////////
-/**
- *
- *
- *  @author OLiver
- */
-void Window::Msg_Group_TableRightButton(const unsigned int  /*group_id*/, const unsigned int  /*ctrl_id*/, const unsigned short  /*selection*/)
-{
-}
-
-///////////////////////////////////////////////////////////////////////////////
-/**
- *
- *
- *  @author OLiver
- */
-void Window::Msg_Group_TableLeftButton(const unsigned int  /*group_id*/, const unsigned int  /*ctrl_id*/, const unsigned short  /*selection*/)
-{
 }

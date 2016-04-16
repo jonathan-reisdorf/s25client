@@ -17,20 +17,16 @@
 #ifndef iwBUILDINGS_H_
 #define iwBUILDINGS_H_
 
-
 #include "IngameWindow.h"
-class dskGameInterface;
-class GameWorldViewer;
+class GameWorldView;
 
 /// Fenster, welches die Anzahl aller Gebäude und der Baustellena auflistet
 class iwBuildings : public IngameWindow
 {
-	GameWorldViewer* const gwv;
-    dskGameInterface* const gi;
+	GameWorldView& gwv;
     public:
 
-        /// Konstruktor von @p iwMilitary.
-        iwBuildings(GameWorldViewer* const gwv, dskGameInterface* const gi);
+        iwBuildings(GameWorldView& gwv);
 
     private:
 
@@ -40,7 +36,5 @@ class iwBuildings : public IngameWindow
 		void Msg_ButtonClick(const unsigned int ctrl_id) override;
 
 };
-
-
 
 #endif

@@ -30,12 +30,6 @@
 // Include last!
 #include "DebugNew.h" // IWYU pragma: keep
 
-///////////////////////////////////////////////////////////////////////////////
-/**
- *  Konstruktor von @p ctrlComboBox.
- *
- *  @author OLiver
- */
 ctrlComboBox::ctrlComboBox(Window* parent,
                            unsigned int id,
                            unsigned short x,
@@ -103,36 +97,18 @@ void ctrlComboBox::Resize_(unsigned short width, unsigned short height)
     list->Resize(width, list_height);
 }
 
-///////////////////////////////////////////////////////////////////////////////
-/**
- *
- *
- *  @author OLiver
- */
 void ctrlComboBox::Msg_PaintAfter()
 {
     // Liste erst jetzt malen, damit sie den Rest überdeckt
     GetCtrl<ctrlList>(0)->Draw();
 }
 
-///////////////////////////////////////////////////////////////////////////////
-/**
- *
- *
- *  @author OLiver
- */
 bool ctrlComboBox::Msg_MouseMove(const MouseCoords& mc)
 {
     // Für Button und Liste weiterleiten
     return RelayMouseMessage(&Window::Msg_MouseMove, mc);
 }
 
-///////////////////////////////////////////////////////////////////////////////
-/**
- *
- *
- *  @author OLiver
- */
 bool ctrlComboBox::Msg_LeftDown(const MouseCoords& mc)
 {
     ctrlList* list = GetCtrl<ctrlList>(0);
@@ -156,24 +132,12 @@ bool ctrlComboBox::Msg_LeftDown(const MouseCoords& mc)
     return RelayMouseMessage(&Window::Msg_LeftDown, mc);
 }
 
-///////////////////////////////////////////////////////////////////////////////
-/**
- *
- *
- *  @author OLiver
- */
 bool ctrlComboBox::Msg_LeftUp(const MouseCoords& mc)
 {
     // Für Button und Liste weiterleiten
     return RelayMouseMessage(&Window::Msg_LeftUp, mc);
 }
 
-///////////////////////////////////////////////////////////////////////////////
-/**
- *
- *
- *  @author Divan
- */
 bool ctrlComboBox::Msg_RightDown(const MouseCoords& mc)
 {
     ctrlList* list = GetCtrl<ctrlList>(0);
@@ -191,12 +155,6 @@ bool ctrlComboBox::Msg_RightDown(const MouseCoords& mc)
     return ret;
 }
 
-///////////////////////////////////////////////////////////////////////////////
-/**
- *
- *
- *  @author Divan
- */
 bool ctrlComboBox::Msg_WheelUp(const MouseCoords& mc)
 {
     ctrlList* list = GetCtrl<ctrlList>(0);
@@ -218,12 +176,6 @@ bool ctrlComboBox::Msg_WheelUp(const MouseCoords& mc)
     return false;
 }
 
-///////////////////////////////////////////////////////////////////////////////
-/**
- *
- *
- *  @author Divan
- */
 bool ctrlComboBox::Msg_WheelDown(const MouseCoords& mc)
 {
     ctrlList* list = GetCtrl<ctrlList>(0);
@@ -237,7 +189,7 @@ bool ctrlComboBox::Msg_WheelDown(const MouseCoords& mc)
     if(!readonly && Coll(mc.x, mc.y, GetX(), GetY(), width_, height_))
     {
         // Scrolled without list opened
-        if (list->GetSelection() < list->GetLineCount() - 1)
+        if (list->GetSelection() + 1 < list->GetLineCount())
             Msg_ListSelectItem(GetID(), list->GetSelection() + 1);
         return true;
     }
@@ -245,13 +197,7 @@ bool ctrlComboBox::Msg_WheelDown(const MouseCoords& mc)
     return false;
 }
 
-///////////////////////////////////////////////////////////////////////////////
-/**
- *
- *
- *  @author OLiver
- */
-void ctrlComboBox::Msg_ListSelectItem(const unsigned int  /*ctrl_id*/, const unsigned short selection)
+void ctrlComboBox::Msg_ListSelectItem(const unsigned int ctrl_id, const int selection)
 {
     // Liste wieder ausblenden
     ShowList(false);

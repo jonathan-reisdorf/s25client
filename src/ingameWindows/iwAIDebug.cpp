@@ -25,6 +25,7 @@
 #include "ai/AIPlayerJH.h"
 #include "controls/ctrlComboBox.h"
 #include "controls/ctrlText.h"
+#include "world/GameWorldView.h"
 #include "Loader.h"
 #include "ogl/glArchivItem_Font.h"
 #include "gameData/const_gui_ids.h"
@@ -33,13 +34,7 @@
 // Include last!
 #include "DebugNew.h" // IWYU pragma: keep
 
-///////////////////////////////////////////////////////////////////////////////
-/**
- *  Konstruktor von @p iwAIDebug.
- *
- *  @author jh
- */
-iwAIDebug::iwAIDebug(GameWorldViewer* const gwv)
+iwAIDebug::iwAIDebug(GameWorldView& gwv)
     : IngameWindow(CGI_OPTIONSWINDOW, 0xFFFF, 0xFFFF, 300, 515, _("AI Debug"), LOADER.GetImageN("resource", 41)),
       gwv(gwv)
 {
@@ -68,7 +63,7 @@ iwAIDebug::iwAIDebug(GameWorldViewer* const gwv)
 	ctrlComboBox* players = AddComboBox(1, 15, 30, 250, 20, TC_GREY, NormalFont, 100);
     for (std::vector<AIPlayerJH*>::iterator it = ais.begin(); it != ais.end(); ++it)
     {
-        players->AddString(_((*it)->GetPlayerName()));
+        players->AddString((*it)->GetPlayerName());
     }
 
     selection = 0;
@@ -103,13 +98,7 @@ iwAIDebug::iwAIDebug(GameWorldViewer* const gwv)
     //list->SetSelection(0);
 }
 
-///////////////////////////////////////////////////////////////////////////////
-/**
- *
- *
- *  @author jh
- */
-void iwAIDebug::Msg_ComboSelectItem(const unsigned int ctrl_id, const unsigned short select)
+void iwAIDebug::Msg_ComboSelectItem(const unsigned int ctrl_id, const int selection)
 {
     switch(ctrl_id)
     {
@@ -118,23 +107,17 @@ void iwAIDebug::Msg_ComboSelectItem(const unsigned int ctrl_id, const unsigned s
 
         case 1:
         {
-            selection = select;
-            gwv->SetAIDebug(overlay, ais[selection]->GetPlayerID(), false);
+            this->selection = selection;
+            gwv.SetAIDebug(overlay, ais[selection]->GetPlayerID(), false);
         } break;
         case 0:
         {
-            overlay = select;
-            gwv->SetAIDebug(overlay, ais[selection]->GetPlayerID(), true);
+            overlay = selection;
+            gwv.SetAIDebug(overlay, ais[selection]->GetPlayerID(), true);
         } break;
     }
 }
 
-///////////////////////////////////////////////////////////////////////////////
-/**
- *
- *
- *  @author jh
- */
 void iwAIDebug::Msg_PaintBefore()
 {
     std::stringstream ss;

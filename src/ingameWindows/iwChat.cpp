@@ -31,12 +31,6 @@
 
 unsigned char iwChat::chat_dest = 0;
 
-///////////////////////////////////////////////////////////////////////////////
-/**
- *  Konstruktor von @p iwChat.
- *
- *  @author OLiver
- */
 iwChat::iwChat()
     : IngameWindow(CGI_CHAT, 0xFFFF, 0xFFFF, 300, 150, _("Chat Window"), LOADER.GetImageN("resource", 41))
 {
@@ -60,7 +54,7 @@ void iwChat::Msg_PaintBefore()
     GetCtrl<ctrlEdit>(0)->SetFocus();
 }
 
-void iwChat::Msg_OptionGroupChange(const unsigned int  /*ctrl_id*/, const unsigned short selection)
+void iwChat::Msg_OptionGroupChange(const unsigned int  /*ctrl_id*/, const int selection)
 {
     chat_dest = static_cast<unsigned char>(selection);
     GetCtrl<ctrlEdit>(0)->SetFocus();

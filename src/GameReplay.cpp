@@ -20,6 +20,7 @@
 #include "defines.h" // IWYU pragma: keep
 #include "GameReplay.h"
 #include "GameSavegame.h"
+#include "gameTypes/MapInfo.h"
 #include "Log.h"
 #include <boost/filesystem.hpp>
 
@@ -29,49 +30,27 @@
 /// Kleine Signatur am Anfang "RTTRRP", die ein gültiges S25 RTTR Replay kennzeichnet
 const char Replay::REPLAY_SIGNATURE[6] = {'R', 'T', 'T', 'R', 'R', 'P'};
 /// Version des Replay-Formates
-const unsigned short Replay::REPLAY_VERSION = 27;
+const unsigned short Replay::REPLAY_VERSION = 28;
 
-///////////////////////////////////////////////////////////////////////////////
-/**
- *
- *  @author OLiver
- */
-Replay::Replay() : nwf_length(0), random_init(0), pathfinding_results(false), map_type(MAPTYPE_SAVEGAME), map_length(0), map_zip_length(0),
+Replay::Replay() : nwf_length(0), random_init(0), pathfinding_results(false),
                    lastGF_(0), last_gf_file_pos(0), gf_file_pos(0)
 {
 }
 
-///////////////////////////////////////////////////////////////////////////////
-/**
- *
- *  @author OLiver
- */
 Replay::~Replay()
 {
     StopRecording();
 }
 
-///////////////////////////////////////////////////////////////////////////////
-/**
- *
- *  @author OLiver
- */
 void Replay::StopRecording()
 {
     file.Close();
     pf_file.Close();
 
     SetPlayerCount(0);
-    map_data.reset();
-    savegame.reset();
 }
 
-///////////////////////////////////////////////////////////////////////////////
-/**
- *
- *  @author OLiver
- */
-bool Replay::WriteHeader(const std::string& filename)
+bool Replay::WriteHeader(const std::string& filename, const MapInfo& mapInfo)
 {
     // Deny overwrite, also avoids double-opening by different processes
     if(bfs::exists(filename))
@@ -106,29 +85,37 @@ bool Replay::WriteHeader(const std::string& filename)
     WriteGGS(file);
 
     // Map-Type
-    file.WriteUnsignedShort(static_cast<unsigned short>(map_type));
+    file.WriteUnsignedShort(static_cast<unsigned short>(mapInfo.type));
 
-    switch(map_type)
+    switch(mapInfo.type)
     {
         default:
             break;
         case MAPTYPE_OLDMAP:
         {
+            RTTR_Assert(!mapInfo.savegame);
             // Map-Daten
-            file.WriteUnsignedInt(map_length);
-            file.WriteUnsignedInt(map_zip_length);
-            file.WriteRawData(map_data.get(), map_zip_length);
+            file.WriteUnsignedInt(mapInfo.mapData.length);
+            file.WriteUnsignedInt(mapInfo.mapData.data.size());
+            file.WriteRawData(&mapInfo.mapData.data[0], mapInfo.mapData.data.size());
+            file.WriteUnsignedInt(mapInfo.luaData.length);
+            if(mapInfo.luaData.length)
+            {
+                file.WriteUnsignedInt(mapInfo.luaData.data.size());
+                file.WriteRawData(&mapInfo.luaData.data[0], mapInfo.luaData.data.size());
+            }
         } break;
         case MAPTYPE_SAVEGAME:
         {
             // Savegame speichern
-            if(!savegame->Save(file))
+            if(!mapInfo.savegame->Save(file))
                 return false;
         } break;
     }
 
     // Mapname
-    file.WriteShortString(map_name);
+    file.WriteShortString(mapFileName);
+    file.WriteShortString(mapName);
 
     // Alles sofort reinschreiben
     file.Flush();
@@ -142,12 +129,7 @@ bool Replay::WriteHeader(const std::string& filename)
     return true;
 }
 
-///////////////////////////////////////////////////////////////////////////////
-/**
- *
- *  @author OLiver
- */
-bool Replay::LoadHeader(const std::string& filename, const bool load_extended_header)
+bool Replay::LoadHeader(const std::string& filename, MapInfo* mapInfo)
 {
     this->fileName_ = filename;
     // Datei öffnen
@@ -178,39 +160,47 @@ bool Replay::LoadHeader(const std::string& filename, const bool load_extended_he
     ReadGGS(file);
 
     // Map-Type
-    map_type = static_cast<MapType>(file.ReadUnsignedShort());
+    MapType mapType = static_cast<MapType>(file.ReadUnsignedShort());
 
-    if(load_extended_header)
+    if(mapInfo)
     {
-        switch(map_type)
+        switch(mapType)
         {
             default:
                 break;
             case MAPTYPE_OLDMAP:
             {
                 // Map-Daten
-                map_length = file.ReadUnsignedInt();
-                map_zip_length = file.ReadUnsignedInt();
-                map_data.reset(new unsigned char[map_zip_length]);
-                file.ReadRawData(map_data.get(), map_zip_length);
+                mapInfo->mapData.length = file.ReadUnsignedInt();
+                mapInfo->mapData.data.resize(file.ReadUnsignedInt());
+                file.ReadRawData(&mapInfo->mapData.data[0], mapInfo->mapData.data.size());
+                mapInfo->luaData.length = file.ReadUnsignedInt();
+                if(mapInfo->luaData.length)
+                {
+                    mapInfo->luaData.data.resize(file.ReadUnsignedInt());
+                    file.ReadRawData(&mapInfo->luaData.data[0], mapInfo->luaData.data.size());
+                }
             } break;
             case MAPTYPE_SAVEGAME:
             {
                 // Load savegame
-                savegame.reset(new Savegame);
-                if(!savegame->Load(file, true, true))
+                mapInfo->savegame.reset(new Savegame);
+                if(!mapInfo->savegame->Load(file, true, true))
                     return false;
             } break;
         }
 
-        map_name = file.ReadShortString();
+        mapFileName = file.ReadShortString();
+        mapName = file.ReadShortString();
+        mapInfo->title = mapName;
+        mapInfo->type = mapType;
 
         // Try to open precalculated pathfinding results
         pathfinding_results = pf_file.Open(filename + "_res", OFM_READ);
 
         if(!pathfinding_results)
             pf_file.Open(filename + "_res", OFM_WRITE);
-    } else if(map_type == MAPTYPE_SAVEGAME)
+    } else if(mapType == MAPTYPE_SAVEGAME)
     {
         // Validate savegame
         Savegame save;
@@ -221,11 +211,6 @@ bool Replay::LoadHeader(const std::string& filename, const bool load_extended_he
     return true;
 }
 
-///////////////////////////////////////////////////////////////////////////////
-/**
- *
- *  @author OLiver
- */
 void Replay::AddChatCommand(const unsigned gf, const unsigned char player, const unsigned char dest, const std::string& str)
 {
     if(!file.IsValid())
@@ -259,11 +244,6 @@ void Replay::AddChatCommand(const unsigned gf, const unsigned char player, const
     file.Flush();
 }
 
-///////////////////////////////////////////////////////////////////////////////
-/**
- *
- *  @author OLiver
- */
 void Replay::AddGameCommand(const unsigned gf, const unsigned short length, const unsigned char* const data)
 {
     if(!file.IsValid())
@@ -316,11 +296,6 @@ void Replay::AddPathfindingResult(const unsigned char data, const unsigned* cons
 }
 
 
-///////////////////////////////////////////////////////////////////////////////
-/**
- *
- *  @author OLiver
- */
 bool Replay::ReadGF(unsigned* gf)
 {
     //// kein Marker bedeutet das Ende der Welt
@@ -338,22 +313,12 @@ bool Replay::ReadGF(unsigned* gf)
     return !eof;
 }
 
-///////////////////////////////////////////////////////////////////////////////
-/**
- *
- *  @author OLiver
- */
 Replay::ReplayCommand Replay::ReadRCType()
 {
     // Type auslesen
     return ReplayCommand(file.ReadUnsignedChar());
 }
 
-///////////////////////////////////////////////////////////////////////////////
-/**
- *
- *  @author OLiver
- */
 void Replay::ReadChatCommand(unsigned char* player, unsigned char*   dest, std::string& str)
 {
     *player = file.ReadUnsignedChar();
@@ -361,11 +326,6 @@ void Replay::ReadChatCommand(unsigned char* player, unsigned char*   dest, std::
     str = file.ReadLongString();
 }
 
-///////////////////////////////////////////////////////////////////////////////
-/**
- *
- *  @author OLiver
- */
 std::vector<unsigned char> Replay::ReadGameCommand()
 {
     std::vector<unsigned char> result(file.ReadUnsignedShort());
@@ -400,11 +360,6 @@ bool Replay::ReadPathfindingResult(unsigned char* data, unsigned* length, MapPoi
     return true;
 }
 
-///////////////////////////////////////////////////////////////////////////////
-/**
- *
- *  @author OLiver
- */
 void Replay::UpdateLastGF(const unsigned last_gf)
 {
     if(!file.IsValid())

@@ -31,12 +31,6 @@
 
 
 
-///////////////////////////////////////////////////////////////////////////////
-/**
- *
- *
- *  @author OLiver
- */
 void GameClient::Command_SetFlag2(const MapPoint pt, unsigned char player)
 {
     gw->SetFlag(pt, player);
@@ -60,27 +54,15 @@ void GameClient::Command_Chat(const std::string& text, const ChatDestination cd)
     send_queue.push(new GameMessage_Server_Chat(playerId_, cd, text));
 }
 
-///////////////////////////////////////////////////////////////////////////////
-/**
- *
- *
- *  @author FloSoft
- */
 void GameClient::Command_ToggleNation()
 {
-    send_queue.push(new GameMessage_Player_Toggle_Nation
+    send_queue.push(new GameMessage_Player_Set_Nation
                     (0xff, Nation((this->GetLocalPlayer().nation + 1) % NAT_COUNT)));
 }
 
-///////////////////////////////////////////////////////////////////////////////
-/**
- *
- *
- *  @author FloSoft
- */
 void GameClient::Command_ToggleTeam(Team newteam)
 {
-    send_queue.push(new GameMessage_Player_Toggle_Team(0xff, newteam));
+    send_queue.push(new GameMessage_Player_Set_Team(0xff, newteam));
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -91,18 +73,12 @@ void GameClient::Command_ToggleTeam(Team newteam)
  */
 void GameClient::Command_ToggleReady()
 {
-    send_queue.push(new GameMessage_Player_Ready(0xFF, GetLocalPlayer().ready ));
+    send_queue.push(new GameMessage_Player_Ready(0xFF, GetLocalPlayer().ready));
 }
 
-///////////////////////////////////////////////////////////////////////////////
-/**
- *
- *
- *  @author FloSoft
- */
-void GameClient::Command_ToggleColor()
+void GameClient::Command_SetColor()
 {
-    send_queue.push(new GameMessage_Player_Toggle_Color(0xFF, 0xFF));
+    send_queue.push(new GameMessage_Player_Set_Color(0xFF, GetLocalPlayer().color));
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -150,10 +126,6 @@ void GameClient::ChangePlayerIngame(const unsigned char player1, const unsigned 
         {
             // Our currently accumulated gamecommands are invalid after the change, as they would modify the old player
             gameCommands_.clear();
-            // zum HQ hinscrollen
-            GameClientPlayer& player = players[playerId_];
-            if(player.hqPos.isValid())
-                gw->MoveToMapObject(player.hqPos);
         }
     }
 

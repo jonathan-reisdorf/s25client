@@ -20,13 +20,12 @@
 #include "defines.h" // IWYU pragma: keep
 #include "GamePlayerInfo.h"
 #include "Serializer.h"
+#include "libutil/src/colors.h"
 #include <algorithm>
 
 // Include last!
 #include "DebugNew.h" // IWYU pragma: keep
 
-///////////////////////////////////////////////////////////////////////////////
-// Konstruktor
 GamePlayerInfo::GamePlayerInfo(const unsigned playerid) :
     playerid(playerid),
     defeated(false),
@@ -35,33 +34,31 @@ GamePlayerInfo::GamePlayerInfo(const unsigned playerid) :
     is_host(false),
     nation(NAT_ROMANS),
     team(TM_NOTEAM),
-    color(0),
+    color(PLAYER_COLORS[0]),
     ping(0),
     rating(0),
     ready(false)
 {
 }
 
-/// Deserialisierungskonstruktor
 GamePlayerInfo::GamePlayerInfo(const unsigned playerid, Serializer& ser) :
     playerid(playerid),
     defeated(false),
     ps(PlayerState(ser.PopUnsignedChar())),
-    aiInfo(),
+    aiInfo(ser),
     name(ser.PopString()),
     origin_name(ser.PopString()),
     is_host(ser.PopBool()),
     nation(Nation(ser.PopUnsignedChar())),
     team(Team(ser.PopUnsignedChar())),
-    color(ser.PopUnsignedChar()),
+    color(ser.PopUnsignedInt()),
     ping(ser.PopUnsignedInt()),
     rating(ser.PopUnsignedInt()),
     ready(ser.PopBool())
 {
+
 }
 
-///////////////////////////////////////////////////////////////////////////////
-// Destruktor
 GamePlayerInfo::~GamePlayerInfo()
 {
 }
@@ -82,12 +79,13 @@ void GamePlayerInfo::clear()
 void GamePlayerInfo::serialize(Serializer& ser) const
 {
     ser.PushUnsignedChar(static_cast<unsigned char>(ps));
+    aiInfo.serialize(ser);
     ser.PushString(name);
     ser.PushString(origin_name);
     ser.PushBool(is_host);
     ser.PushUnsignedChar(static_cast<unsigned char>(nation));
     ser.PushUnsignedChar(team);
-    ser.PushUnsignedChar(color);
+    ser.PushUnsignedInt(color);
     ser.PushUnsignedInt(ping);
     ser.PushUnsignedInt(rating);
     ser.PushBool(ready);
@@ -106,3 +104,17 @@ void GamePlayerInfo::SwapInfo(GamePlayerInfo& two)
     swap(ready, two.ready);
 }
 
+int GamePlayerInfo::GetColorIdx() const
+{
+    return GetColorIdx(color);
+}
+
+int GamePlayerInfo::GetColorIdx(unsigned color)
+{
+    for(int i = 0; i < static_cast<int>(PLAYER_COLORS.size()); ++i)
+    {
+        if(PLAYER_COLORS[i] == color)
+            return i;
+    }
+    return -1;
+}
